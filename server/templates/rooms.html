@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h3>{% block title %} Add/Remove Rooms {% endblock %}</h3>
+    <form method="post">
+        <label for="room">Room Number:</label>
+        <input type="text" name="room_id"
+               placeholder="ex. 1111"
+               value="{{ request.form['room_id'] }}">
+        </input>
+        <label for="room_name">Room Name:</label>
+        <input type="text" name="room_id"
+               placeholder="ex. 1111"
+               value="{{ request.form['room_id'] }}">
+        </input>
+    
+        <button type="submit">Submit</button>
+    </form>
+    <br>
+    <h3> Room List: </h3>
+    <table class="post" style="width:100%">
+    <tr>
+        <th>ROOM</th>
+        <th>NAME</th>
+    </tr>
+    {% for row in rooms %}
+    <tr>
+        <td>{{ row['room_id'] }}</td>
+        <td>{{ row['room_name'] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}
