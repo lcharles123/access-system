@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, url_for, flash, redirect
 app = Flask(__name__)
-
+from flask_login import login_required, current_user
 from werkzeug.exceptions import abort, BadRequestKeyError
 # for lock api, #FIXME change name of app, #FIXME use separate file
 from flask_restful import Resource, Api  
@@ -19,70 +19,9 @@ app.config['SECRET_KEY'] = os.urandom(12)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-''' Exhibit all accesses in the room system, need to be logged
-    All accesses are stored in a local database
-'''
-# TODO can filter table by room, user, succeeded, date range
 
 
-# TODO login system
-authenticated = False
-from flask_login import LoginManager
-login_manager = LoginManager()
 
-
-# https://stackoverflow.com/questions/65590876/flask-login-without-database
-@app.route('/')
-def index():
-    rows = get_accesses()
-    return render_template('index.html', rows=rows) 
-
-''' Get user list access from local DB 
-    @return a row object, such as r['col1'],r['col2']... for r int row 
-'''
-def get_accesses():
-    db_path = os.path.join(BASE_DIR, "database/access.db")
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    q_res = conn.execute('SELECT * FROM access_count').fetchall()
-    conn.close()
-    return q_res
-    
-
-'''List all users, given a room number from a specific ldap server'''
-def list_users(room_number, url='ldap://serv.hopto.org', admin='cn=admin,dc=ufmg,dc=br', pwd='yweruyoityutrwgfjdytuasdfrtasf'):
-    ldap_srv = ldap.initialize(url)
-    ldap_srv.protocol_version = ldap.VERSION3
-    ldap_srv.set_option(ldap.OPT_REFERRALS, 0)
-    ldap_srv.simple_bind_s(admin, pwd)
-    
-    base = "cn="+str(room_number)+",ou=rooms,dc=ufmg,dc=br"
-    criteria = "(objectClass=posixGroup)" # list all users
-    attributes = ['memberUid']
-    try:
-        users = l.search_s(base, ldap.SCOPE_SUBTREE, criteria, attributes)[0][1]['memberUid']
-    except:
-        users = [b'']
-    if users[0] == b'':
-        return b''   
-    users = [str(i).replace(',', '=').split('=')[1] for i in users]
-    ldap_srv.unbind()
-    return users
-
-
-def get_db_connection():
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-def get_post(post_id):
-    conn = get_db_connection()
-    post = conn.execute('SELECT * FROM main WHERE id = ?',
-                        (post_id,)).fetchone()
-    conn.close()
-    if post is None:
-        abort(404)
-    return post
 
 ''' A page used to add users
     It can be used a enrollment_id to add user to room_number
