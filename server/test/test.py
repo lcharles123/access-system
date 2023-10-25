@@ -1,4 +1,12 @@
-import this
+import flask_unittest
+from flask_app import create_app
+
+class TestFoo(flast_unittest.ClientTestCase):
+    app = create_app()
+
+    def test_foo_with_client(self, client):
+        rv = client.get('/hello')
+        self.assertInResponse(rv, 'hello world!')
 
 def test_main_app_working():
     pass

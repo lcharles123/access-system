@@ -169,16 +169,13 @@ def get_rooms():
 # once a class is defined, from Resource, you can add methods that are mapped to http methods
 # using api.add_resource, its possible to add a class to it and any desired endpoint ie. api.add_resource(Todo, '/todos/<todo_id>')
 
-class Lock_Api(Resource):
-    def get(self):
-        return {'hello': 'get'}
-    def post(self):
-        # TODO check if data is valid
-        # consult db of permissions
-        # respond with granted or denied
-        return {'hello': 'post'}
+from .api.handlers import Lock_Api
 
 api.add_resource(Lock_Api, '/api')
+
+@main.route('/help')
+def help():
+    return render_template('help.html')
 
 @main.route('/help')
 def help():
