@@ -1,8 +1,13 @@
-from flask import Blueprint, render_template
+import sqlite3
+import ldap
+from flask import Blueprint, render_template, request, url_for, flash, redirect
 from . import db
 from flask_login import login_required, current_user
-main = Blueprint('main', __name__)
 from flask_restful import Resource, Api  
+from os import path
+
+BASE_DIR = path.dirname(path.abspath(__file__))
+main = Blueprint('main', __name__)
 api = Api(main)
 
 ''' Exhibit all accesses in the room system, need to be logged
@@ -11,16 +16,16 @@ api = Api(main)
 # TODO can filter table by room, user, succeeded, date range
 
 @main.route('/')
-@login_required
+#@login_required
 def index():
     rows = get_accesses()
-    return render_template('index.html', rows=rows) 
+    return render_template('index.html', current_user=current_user, rows=rows) 
 
 ''' Get user list access from local DB 
     @return a row object, such as r['col1'],r['col2']... for r int row 
 '''
 def get_accesses():
-    db_path = os.path.join(BASE_DIR, "database/access.db")
+    db_path = path.join(BASE_DIR, "database/access.db")
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     q_res = conn.execute('SELECT * FROM access_count').fetchall()
@@ -62,12 +67,6 @@ def get_post(post_id):
     if post is None:
         abort(404)
     return post
-'''
-@main.route('/profile')
-@login_required
-def profile():
-    return render_template('profile.html', name=current_user.name)
-'''
 
 ''' A page used to add users
     It can be used a enrollment_id to add user to room_number
@@ -75,8 +74,9 @@ def profile():
     indicating success or error with its 'error type'
     'error type' can be one of {WrongUser, WrongRoom, AlreadyAdded, Unknown}
 '''
+#TODO adicionar data de término automático da permissão
 @main.route('/users', methods=('GET', 'POST'))
-@login_required
+#@login_required
 def users():
     if request.method == 'POST':
         user_id = None
@@ -85,15 +85,16 @@ def users():
             user_id = request.form['user_id']
             room_id = request.form['room_id']
         except:
-            flash('Corrupted data sent!', 'alert_fail')
+            flash('Dados corrompidos!', 'alert_fail')
         
         if not room_id or not user_id:
             if not room_id:
-                flash('Room ID is required!', 'alert_fail')
+                flash('Ientificador da sala em branco!', 'alert_fail')
             if not user_id:
-                flash('User ID is required!', 'alert_fail')
+                flash('Identificador de usuário em branco!', 'alert_fail')
         else:
-            flash('User and room added', 'alert_ok')
+            msg = 'Usuário '+''+' adicionado à sala '+''
+            flash(msg, 'alert_ok')
         
 
         if True:
@@ -106,7 +107,8 @@ def users():
             conn.commit()
             conn.close()
             return redirect(url_for('index'))'''
-            flash('User added!', 'alert_ok')
+            flash('Matrícula de usuário inexistente!', 'alert_fail')
+            flash('Sala Inexistente, por favor cadasatre-a ***aqui***', 'alert_fail')
     permissions = get_permissions_list()
     
     
@@ -117,7 +119,7 @@ def users():
     @return a row object, such as r['col1'],r['col2']... for r int row 
 '''
 def get_permissions_list():
-    db_path = os.path.join(BASE_DIR, "database/permissions.db")
+    db_path = path.join(BASE_DIR, "database/permissions.db")
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     q_res = conn.execute('SELECT * FROM permissions').fetchall()
@@ -128,7 +130,7 @@ def get_permissions_list():
     Can include new rooms in LDAP server
 '''
 @main.route('/rooms', methods=('GET', 'POST'))
-@login_required
+#@login_required
 def rooms():
     if request.method == 'POST':
         room_id = None
@@ -154,7 +156,7 @@ def rooms():
     return render_template('rooms.html', rooms=rooms)
 
 def get_rooms():
-    db_path = os.path.join(BASE_DIR, "database/rooms.db")
+    db_path = path.join(BASE_DIR, "database/rooms.db")
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     q_res = conn.execute('SELECT * FROM rooms').fetchall()

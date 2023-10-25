@@ -26,11 +26,11 @@ def login_post():
     login_user(user, remember=remember)
     # if the above check passes, then we know the user has the right credentials
     return redirect(url_for('main.profile'))
-    
+
+# FIXME there is no signup here, the system will have a admin user and he can add or remove users, this page will be for him
 @auth.route('/signup')
 def signup():
     return render_template('signup.html')
-
 @auth.route('/signup', methods=['POST'])
 def signup_post():
     email = request.form.get('email')
@@ -53,7 +53,6 @@ def signup_post():
     return redirect(url_for('auth.login'))
 
 @auth.route('/logout')
-@login_required
 def logout():
     logout_user()
     return redirect(url_for('main.index'))

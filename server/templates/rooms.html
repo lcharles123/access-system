@@ -1,27 +1,30 @@
 {% extends 'base.html' %}
 
-{% block content %}
-    <h3>{% block title %} Add/Remove Rooms {% endblock %}</h3>
+{% block title_content %}     
+    <title>Cadastro Salas - Fechadura Eletrônica</title>
+{% endblock %}
+{% block body_content %}
+    <h3>{% block title %} Adicionar Salas {% endblock %}</h3>
     <form method="post">
-        <label for="room">Room Number:</label>
+        <label for="room">Número da sala:</label>
         <input type="text" name="room_id"
-               placeholder="ex. 1111"
+               placeholder="Ex.: 1111"
                value="{{ request.form['room_id'] }}">
         </input>
-        <label for="room_name">Room Name:</label>
+        <label for="room_name">Nome da Sala:</label>
         <input type="text" name="room_id"
-               placeholder="ex. 1111"
+               placeholder="Ex.: WINET"
                value="{{ request.form['room_id'] }}">
         </input>
     
-        <button type="submit">Submit</button>
+        <button type="submit">Cadastrar</button>
     </form>
     <br>
-    <h3> Room List: </h3>
+    <h3> Lista de Salas: </h3>
     <table class="post" style="width:100%">
     <tr>
-        <th>ROOM</th>
-        <th>NAME</th>
+        <th>Número</th>
+        <th>Nome</th>
     </tr>
     {% for row in rooms %}
     <tr>
