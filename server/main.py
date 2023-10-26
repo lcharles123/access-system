@@ -6,9 +6,11 @@ from flask_login import login_required, current_user
 from flask_restful import Resource, Api  
 from os import path
 
+
+#FIXME remove after fatoration
 BASE_DIR = path.dirname(path.abspath(__file__))
 main = Blueprint('main', __name__)
-api = Api(main)
+
 
 ''' Exhibit all accesses in the room system, need to be logged
     All accesses are stored in a local database
@@ -163,22 +165,18 @@ def get_rooms():
     conn.close()
     return q_res
 
-'''
-'''
-#TODO minimal api here https://flask-restful.readthedocs.io/en/latest/quickstart.html#a-minimal-api
-# once a class is defined, from Resource, you can add methods that are mapped to http methods
-# using api.add_resource, its possible to add a class to it and any desired endpoint ie. api.add_resource(Todo, '/todos/<todo_id>')
-
-from .api.handlers import Lock_Api
-
-api.add_resource(Lock_Api, '/api')
 
 @main.route('/help')
 def help():
     return render_template('help.html')
 
-@main.route('/help')
-def help():
-    return render_template('help.html')
+
+
+
+
+
+
+
+
 
 

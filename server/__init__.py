@@ -1,22 +1,31 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
-from os import urandom
 
-db = SQLAlchemy()
+from flask_login import LoginManager
+from os import urandom, path
+from server.api.routes import generate_api_routes
+from server.database import db, db_init
+
 
 def create_app():
-    
     app = Flask(__name__)
-
+    
+    app.config['DEBUG'] = True
     app.config['SECRET_KEY'] = urandom(12)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
-
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database/db.sqlite'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+    
+    generate_api_routes(app) # from api.routes
     db.init_app(app)
+    
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
     login_manager.init_app(app)
-
+    
+    if not path.exists(app.config['SQLALCHEMY_DATABASE_URI']):
+        db.app = app
+        db.create_all()
+        db_init.create_admin_user()
+    
     from .models import User
 
     @login_manager.user_loader
@@ -31,7 +40,9 @@ def create_app():
     # blueprint for non-auth parts of app
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint)
-
+    
+    
+    
     return app
 
 
