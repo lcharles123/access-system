@@ -27,12 +27,24 @@ def login_post():
     # if the above check passes, then we know the user has the right credentials
     return redirect(url_for('main.profile'))
 
-# FIXME there is no signup here, the system will have a admin user and he can add or remove users, this page will be for him
-@auth.route('/signup')
+@auth.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('main.index'))
+    
+
+
+
+
+
+
+# FIXME there is no signup here, the system will have a admin user and he can add or remove users, this page will be for him , use this to create users
+'''@auth.route('/signup')
 def signup():
     return render_template('signup.html')
-@auth.route('/signup', methods=['POST'])
-def signup_post():
+@auth.route('/signup', methods=['POST'])'''
+#def signup_post():
+def add_user():
     email = request.form.get('email')
     name = request.form.get('name')
     password = request.form.get('password')
@@ -52,8 +64,4 @@ def signup_post():
 
     return redirect(url_for('auth.login'))
 
-@auth.route('/logout')
-def logout():
-    logout_user()
-    return redirect(url_for('main.index'))
-    
+

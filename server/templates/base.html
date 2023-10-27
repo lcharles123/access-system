@@ -58,9 +58,9 @@
 <body>
 <nav class="header">
 	<ul>
-      <a href="{{ url_for('main.index') }}">Lista de Acessos</a> 
-      <a href="{{ url_for('main.users') }}">Cadastro de Usuários</a>
-      <a href="{{ url_for('main.rooms') }}">Cadastro de Salas</a>
+      <a href="{{ url_for('main.index') }}">Listar Acessos</a> 
+      <a href="{{ url_for('main.users') }}">Conceder Permissões</a>
+      <a href="{{ url_for('main.rooms') }}">Cadastrar Usuários</a>
       
       {% if current_user.is_authenticated %}
       <a href="{{ url_for('auth.logout') }}">Sair</a>       
