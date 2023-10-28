@@ -10,16 +10,17 @@ import bcrypt
     Used for locks to have the same underlying security as regular users
     @param ---
 '''
-class User(db.Model, UserMixin): #FIXME alter to SystemUser, because User can be a person wanting to access the lock
-    id = db.Column(db.Integer, primary_key=True) # primary keys are required by SQLAlchemy
+class User(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
     __tablename__ = 'user'
-    # username can be 0, room number, enrollment id
-    username = db.Column('username', db.String(32))
+    # username can be 0 (admin), room number(4 digits), 
+    # enrollment id(10 digits), user(#TODO check if there is a unique id in this case)
+    username = db.Column('username', db.String(32), unique=True)
     name = db.Column(db.String(64))
-    email = db.Column(db.String(64), unique=True) 
-    password = db.Column(db.String(64)) # hash sha256 alg
+    email = db.Column(db.String(64))
+    password = db.Column(db.String(64)) # TODO hashed passwd
     created = db.Column(db.DateTime, default=datetime.utcnow)
-    role = db.Column(db.String, default="user") # can be admin, user, lock, lock_user
+    role = db.Column(db.String, default="lock_user") # can be admin, user, lock, lock_user
     authenticated = db.Column(db.Boolean, default=False)
     
     # properties implemented in UserMixin
@@ -34,6 +35,9 @@ class User(db.Model, UserMixin): #FIXME alter to SystemUser, because User can be
 
     def is_anonymous(self):
         return False
+    
+    def what_role(self):
+        return self.role
 
 ''' Permissions table, can ingress in a room?
 '''
@@ -55,8 +59,8 @@ class Permissions(db.Model):
 class Entry_List(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     __tablename__ = 'entry_list'
-    room = ForeignKey('user.username')
-    author = ForeignKey('user.username')
+    room = db.Column(db.String(64)) #FIXME make a relation here
+    author = db.Column(db.String(64)) #FIXME make a relation here
     date = db.Column(db.DateTime, default=datetime.utcnow)
     success = db.Column(db.Boolean, default=False)
     

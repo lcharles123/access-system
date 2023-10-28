@@ -1,7 +1,7 @@
 import sqlite3
 import ldap
 from flask import Blueprint, render_template, request, url_for, flash, redirect
-from . import db
+from server.database import db
 from flask_login import login_required, current_user
 from flask_restful import Resource, Api  
 from os import path

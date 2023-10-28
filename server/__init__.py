@@ -26,7 +26,7 @@ def create_app():
         db.create_all()
         db_init.create_admin_user()
     
-    from .models import User
+    from server.database.models import User
 
     @login_manager.user_loader
     def load_user(user_id):

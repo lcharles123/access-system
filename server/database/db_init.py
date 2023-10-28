@@ -1,18 +1,26 @@
 import logging
 from server.database import db
-from server.models import User, Permissions
-import bcrypt
+from server.database.operations import *
 
-''' There will be only one user at the begining
-    and he can create more users.
-'''
 
 def create_admin_user():
+    user = get_user(db, '0')
+    if user is None:
+        atributes={'username': '0', 
+                   'email': 'admin@example.com', 
+                   'password':'123', 
+                   'role': 'admin'}
+    if insert_user(db, 'admin', atributes=atributes):
+        logging.info("Admin was set.")
+    else:
+        logging.info("Admin already set.")
+        
+'''
     user = User.query.filter_by(username="admin", role="admin").first()
     if user is None:
         user = User(
             username="admin",
-            name="admin"
+            name="admin",
             password="admin",
             email="admin@example.com",
             role="admin"
@@ -22,23 +30,27 @@ def create_admin_user():
         logging.info("Admin was set.")
     else:
         logging.info("Admin already set.")
-
+'''
+'''
 # To dev purposes, populate the model
-
-def create_tree_normal_users():
-    user1 = User.query.filter_by(username="maria", role='user').first()
-    user2 = User.query.filter_by(username="jose", role='user').first()
-    user3 = User.query.filter_by(username="ana", role='user').first()
+def create_tree_users(): # can access web interface and grant room access to lock_users
+    user1 = User.query.filter_by(username="andre", role='user').first()
+    user2 = User.query.filter_by(username="roberto", role='user').first()
+    user3 = User.query.filter_by(username="antonia", role='user').first()
     if (user1 and user2 and user3) is None:
-        users = [User(username="maria", name="maria", password="maria123", email="maria@example.com"),
-                 User(username="jose", name="jose", password="jose123", email="jose@example.com" ),
-                 User(username="ana", name="ana", password="ana123", email="ana@example.com" )]
+        users = [ User(username="andre", name="andre", password="andre123", 
+                        email="andre@example.com", role='user'),
+                  User(username="roberto", name="roberto", password="roberto123", 
+                        email="roberto@example.com", role='user' ),
+                  User(username="antonia", name="antonia", password="antonia123", 
+                        email="antonia@example.com", role='user' )]
         for u in users:
             db.session.add(u)
         db.session.commit()
         logging.info("Three users was set.")
     else:
         logging.info("Three users was already set.")
+
 
 def create_tree_locks():
     lock1 = User.query.filter_by(username="1111", name="WINET1", role='lock').first()
@@ -54,6 +66,21 @@ def create_tree_locks():
         logging.info("Three locks was set.")
     else:
         logging.info("Three locks was already set.")
+
+def create_tree_lock_users():
+    user1 = User.query.filter_by(username="maria", role='user').first()
+    user2 = User.query.filter_by(username="jose", role='user').first()
+    user3 = User.query.filter_by(username="ana", role='user').first()
+    if (user1 and user2 and user3) is None:
+        users = [User(username="maria", name="maria", password="maria123", email="maria@example.com"),
+                 User(username="jose", name="jose", password="jose123", email="jose@example.com" ),
+                 User(username="ana", name="ana", password="ana123", email="ana@example.com" )]
+        for u in users:
+            db.session.add(u)
+        db.session.commit()
+        logging.info("Three users was set.")
+    else:
+        logging.info("Three users was already set.")
 
 
 def create_tree_permissions():
@@ -87,7 +114,7 @@ def create_tree_access():
     else:
         logging.info("Three Entries was already set.")
 
-
+'''
 
 
 
