@@ -23,6 +23,7 @@ def create_app():
     
     if not path.exists(app.config['SQLALCHEMY_DATABASE_URI']):
         db.app = app
+        db.drop_all()
         db.create_all()
         db_init.create_admin_user()
     

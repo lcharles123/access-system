@@ -1,4 +1,5 @@
 from server.database.models import *
+from bcrypt import gensalt, hashpw
 
 ''' Insert user in db
     @param db: database object
@@ -41,8 +42,8 @@ def insert_user(db, role, atributes={}):
         user = User(username=atributes['username'], 
                     name=atributes['name'], 
                     email=email, 
-                    password=atributes['password'], 
-                    role=role).first()
+                    password=hashpw(str(atributes['password']).encode(), gensalt()), 
+                    role=role)
         db.session.add(user)
         db.session.commit()
         return True
@@ -76,7 +77,7 @@ def is_valid_user(db, username):
 
 def check_roles(room, user):
     # admin user is not valid as user of a room
-   if room.role not in ['lock'] or user.role not in ['user, user_lock']:
+   if room.role not in ['lock'] or user.role not in ['user, lock_user']:
         raise ValueError("Roles mismatch.") 
 def set_permission(db, room, user):
     check_roles(room, user)
@@ -109,7 +110,7 @@ def insert_entry_list(db, room, user, success):
     if entry is None:
         entry = Entry_list( room=room,
                             author=user,
-                            success=success).first()
+                            success=success)
         db.session.add(entry)
         db.session.commit()
         return True
