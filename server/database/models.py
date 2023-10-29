@@ -56,11 +56,11 @@ class Permissions(db.Model):
     created = db.Column(db.DateTime, default=datetime.utcnow)
     key = db.Column(db.String(64)) #FIXME ajust as needed
     
+    def get_username(self):
+        return self.user
+    
     def get_room(self):
         return self.room
-    
-    def get_key(self):
-        return self.key
 
     ''' Row like object: 
         dict with key:value representing col_name:row_value
@@ -71,7 +71,7 @@ class Permissions(db.Model):
 
 ''' List of users that used the locks
 '''
-class Entry_List(db.Model):
+class Entry_List(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     __tablename__ = 'entry_list'
     room = db.Column(db.String(64)) #FIXME make a relation here
@@ -79,12 +79,19 @@ class Entry_List(db.Model):
     date = db.Column(db.DateTime, default=datetime.utcnow)
     success = db.Column(db.Boolean, default=False)
     
-    def get_enrollment(self):
-        return self.author
-    
-    def get_room(self):
-        return self.room
+     # properties implemented in UserMixin
+    def is_active(self):
+        return True
 
+    def get_username(self):
+        return self.username
+
+    def is_authenticated(self):
+        return self.authenticated
+
+    def is_anonymous(self):
+        return False
+    
     ''' Row like object: 
         dict with key:value representing col_name:row_value
     '''

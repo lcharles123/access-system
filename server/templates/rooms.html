@@ -7,14 +7,14 @@
     <h3>{% block title %} Adicionar Salas {% endblock %}</h3>
     <form method="post">
         <label for="room">Número da sala:</label>
-        <input type="text" name="room_id"
+        <input type="text" name="room"
                placeholder="Ex.: 1111"
-               value="{{ request.form['room_id'] }}">
+               value="{{ request.form['room'] }}">
         </input>
-        <label for="room_name">Nome da Sala:</label>
-        <input type="text" name="room_id"
+        <label for="name">Nome da Sala:</label>
+        <input type="text" name="name"
                placeholder="Ex.: WINET"
-               value="{{ request.form['room_id'] }}">
+               value="{{ request.form['name'] }}">
         </input>
     
         <button type="submit">Cadastrar</button>
@@ -23,13 +23,13 @@
     <h3> Lista de Salas: </h3>
     <table class="post" style="width:100%">
     <tr>
-        <th>Número</th>
         <th>Nome</th>
+        <th>Número</th>
     </tr>
     {% for row in rooms %}
     <tr>
-        <td>{{ row['room_id'] }}</td>
-        <td>{{ row['room_name'] }}</td>
+        <td>{{ row['name'] }}</td>
+        <td>{{ row['username'] }}</td>
     </tr>
     {% endfor %}
 </table>
