@@ -1,13 +1,14 @@
 import sqlite3
 import ldap
-from flask import Blueprint, render_template, request, url_for, flash, redirect
-from server.database import db
+from flask import Blueprint, current_app, render_template, request, url_for, flash, redirect
+from server.database import db, db_init
+from server.database import operations as db_oper
 from flask_login import login_required, current_user
 from flask_restful import Resource, Api  
 from os import path
 
 
-#FIXME remove after fatoration
+#FIXME remove after factoration
 BASE_DIR = path.dirname(path.abspath(__file__))
 main = Blueprint('main', __name__)
 
@@ -17,25 +18,31 @@ main = Blueprint('main', __name__)
 '''
 # TODO can filter table by room, user, succeeded, date range
 
+@main.before_app_first_request
+def create_tables():
+    if not path.exists(current_app.config['SQLALCHEMY_DATABASE_URI']):
+        db.app = main
+        db.drop_all()
+        db.create_all()
+        db_init.create_admin_user()
+        db_init.create_tree_users()
+        db_init.create_tree_locks()
+        db_init.create_tree_lock_users()
+        db_init.set_tree_permissions()
+        db_init.create_tree_access()
+
+''' List last access to locks.
+'''
 @main.route('/')
 #@login_required
 def index():
-    rows = get_accesses()
+    rows = db_oper.get_entry_table()
+    #print(rows[0].as_row)
     return render_template('index.html', current_user=current_user, rows=rows) 
-
-''' Get user list access from local DB 
-    @return a row object, such as r['col1'],r['col2']... for r int row 
-'''
-def get_accesses():
-    db_path = path.join(BASE_DIR, "database/access.db")
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    q_res = conn.execute('SELECT * FROM access_count').fetchall()
-    conn.close()
-    return q_res
     
 
-'''List all users, given a room number from a specific ldap server'''
+'''List all users, given a room number from a specific ldap server
+'''
 def list_users(room_number, url='ldap://serv.hopto.org', admin='cn=admin,dc=ufmg,dc=br', pwd='yweruyoityutrwgfjdytuasdfrtasf'):
     ldap_srv = ldap.initialize(url)
     ldap_srv.protocol_version = ldap.VERSION3
@@ -55,21 +62,6 @@ def list_users(room_number, url='ldap://serv.hopto.org', admin='cn=admin,dc=ufmg
     ldap_srv.unbind()
     return users
 
-
-def get_db_connection():
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-def get_post(post_id):
-    conn = get_db_connection()
-    post = conn.execute('SELECT * FROM main WHERE id = ?',
-                        (post_id,)).fetchone()
-    conn.close()
-    if post is None:
-        abort(404)
-    return post
-
 ''' A page used to add users
     It can be used a enrollment_id to add user to room_number
     After the request for adding, a message is displayed
@@ -81,24 +73,40 @@ def get_post(post_id):
 #@login_required
 def users():
     if request.method == 'POST':
-        user_id = None
-        room_id = None
+        user = None
+        room = None
         try:
-            user_id = request.form['user_id']
-            room_id = request.form['room_id']
+            user = request.form['user']
+            room = request.form['room']
         except:
             flash('Dados corrompidos!', 'alert_fail')
         
-        if not room_id or not user_id:
-            if not room_id:
+        if not user or not room:
+            if not room:
                 flash('Ientificador da sala em branco!', 'alert_fail')
-            if not user_id:
+            if not user:
                 flash('Identificador de usuário em branco!', 'alert_fail')
+            
+#       elif  TODO validate user in LDAP here, if not valid, then
+#           flash('Usuario nao matriculado na instituicao.', 'alert_fail')          
+            
         else:
-            msg = 'Usuário '+''+' adicionado à sala '+''
-            flash(msg, 'alert_ok')
         
-
+            if not db_oper.is_valid_user(db, user, 'user') or
+                not db_oper.is_valid_user(db, user, 'lock_user'):
+                flash('Usuário '+user+' não e válido.', 'alert_fail') 
+            if not db_oper.is_valid_user(db, room, 'lock'):
+                flash('Fechadura número '+user+' não e válida.', 'alert_fail') 
+            # user validatede here, check permission
+            if db_oper.check_permission(room, user):
+                msg = 'Usuário '+user+' já possui a permissão para a sala '+room
+                flash(msg, 'alert_warn')
+            elif db_oper.set_permission(room, user):
+                msg = 'Usuário '+user+' adicionado à sala '+room+'.'
+                flash(msg, 'alert_ok')
+            else:
+                flash('Erro ao adicionar usuário.', 'alert_fail')
+                
         if True:
             pass
         else:
@@ -109,11 +117,9 @@ def users():
             conn.commit()
             conn.close()
             return redirect(url_for('index'))'''
-            flash('Matrícula de usuário inexistente!', 'alert_fail')
+            
             flash('Sala Inexistente, por favor cadasatre-a ***aqui***', 'alert_fail')
-    permissions = get_permissions_list()
-    
-    
+    permissions = db_oper.get_permission_table()
     return render_template('users.html', permissions=permissions)
 
 #FIXME dummy function for access local db
@@ -169,14 +175,5 @@ def get_rooms():
 @main.route('/help')
 def help():
     return render_template('help.html')
-
-
-
-
-
-
-
-
-
 
 

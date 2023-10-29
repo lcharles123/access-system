@@ -2,43 +2,16 @@ from flask import Flask, render_template, request, url_for, flash, redirect
 app = Flask(__name__)
 from flask_login import login_required, current_user
 from werkzeug.exceptions import abort, BadRequestKeyError
-# for lock api, #FIXME change name of app, #FIXME use separate file
 from flask_restful import Resource, Api  
 api = Api(app)
 
 import sqlite3
 import os
-import ldap
+
 import datetime
 
-# FIXME create app # https://stackoverflow.com/questions/15583671/flask-how-to-architect-the-project-with-multiple-apps
-# https://www.digitalocean.com/community/tutorials/how-to-add-authentication-to-your-app-with-flask-login
 
 
-app.config['SECRET_KEY'] = os.urandom(12)
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-
-
-
-
-
-
-
-''' Do logout from server
-'''
-@app.route('/logout', methods=('GET',))
-def logout():
-    flash('Logged out!', 'alert_ok')
-    return redirect(url_for('login'))
-
-@app.route('/login', methods=('GET', 'POST'))
-def login():
-    if request.method == 'POST':
-        flash('Logged in!', 'alert_ok')
-        return redirect(url_for('index'))
-    
-    return render_template('login.html')
 
 
 @app.route('/<int:post_id>')

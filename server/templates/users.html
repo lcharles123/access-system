@@ -5,16 +5,16 @@
 {% block body_content %}
     <h3>{% block title %} Adicionar usuários {% endblock %}</h3>
     <form method="post">
-        <label for="room">Número da Sala:</label>
+        <label for="room">Número da Sala:</label> {# <!-- TODO use dropdown menu -->#}
 
-        <input type="text" name="room_id"
+        <input type="text" name="room"
                placeholder="Ex.: 1111"
-               value="{{ request.form['room_id'] }}"></input>
+               value="{{ request.form['room'] }}"></input>
         <label for="enrollment">Matrícula:</label>
 
-        <input name="user_id"
+        <input name="user"
                   placeholder="Ex.: 2016065120"
-                  value="{{ request.form['user_id'] }}"></input>
+                  value="{{ request.form['user'] }}"></input>
 
         <button type="submit">Enviar</button>
     </form>
@@ -28,9 +28,9 @@
     </tr>
     {% for row in permissions %}
     <tr>
-        <td>{{ row['room_id'] }}</td>
-        <td>{{ row['user_id'] }}</td>
-        <td>{{ row['time'] }}</td>
+        <td>{{ row['room'] }}</td>
+        <td>{{ row['user'] }}</td>
+        <td>{{ row['created'] }}</td>
     </tr>
     {% endfor %}
 </table>

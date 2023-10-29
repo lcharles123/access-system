@@ -20,7 +20,8 @@ def create_admin_user():
 def create_tree_users(): 
     rs = []
     for name in ["andre", "roberto", "antonia"]:
-        atributes={'username': str(sum(to_numerical(c) for c in name) % 998 + 1), 
+        atributes={'username': str(sum(ord(c) for c in name) % 998 + 1), 
+                   'name': name, 
                    'email': name+'@example.com', 
                    'password': name+'123', 
                    'role': 'user'}

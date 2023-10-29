@@ -30,7 +30,7 @@ def insert_user(db, role, atributes={}):
             if atributes['name'] == '':
                 raise Exception()
         except:
-            raise ValueError("Name required for lock and lock_user.")
+            raise ValueError("Name required for user lock and lock_user.")
     else:
         raise ValueError("'role' must be one of ['admin', 'user', 'lock', 'lock_user']")
     
@@ -69,21 +69,26 @@ def update_user(db, username, atributes):
 def get_user(db, username):
     return User.query.filter_by(username=username).first()
 
-def get_all_users(db, role):
+def get_all_table_users(db, role):
     return User.query.filter_by(role=role).all()
 
-def is_valid_user(db, username):
-    return User.query.filter_by(username=username).first() is not None
+def is_valid_user(db, username, role):
+    return User.query.filter_by(username=username, role=role).first() is not None
 
 def check_roles(room, user):
-    # admin user is not valid as user of a room
-   if room.role not in ['lock'] or user.role not in ['user, lock_user']:
-        raise ValueError("Roles mismatch.") 
+    room = User.query.filter_by(username=room).first()
+    user = User.query.filter_by(username=user).first()
+    if room is None or user is None:
+        raise ValueError("Empty Roles")
+    if room.role is 'lock' and user.role in ['lock_user', 'user']:
+        raise ValueError("Roles mismatch: "+ user.role +" can't enter "+room.role)
+            
+
 def set_permission(db, room, user):
     check_roles(room, user)
     p = Permissions.query.filter_by(room=room, user=user).first()
     if p is None:
-        p = Permissions(room=room, user=user).first()
+        p = Permissions(room=room, user=user)
         db.session.add(p)
         db.session.commit()
         return True
@@ -104,18 +109,24 @@ def check_permission(db, room, user):
     check_roles(room, user)
     return Permissions.query.filter_by(room=room, user=user).first() is not None
 
-def insert_entry_list(db, room, user, success):
-    check_roles(room, user)
-    entry = Entry_list.query.filter_by(room=room, author=username).first()
+def get_permission_table():
+    return Permissions.query.all()
+
+def insert_entry_list(db, room, username, success):
+    check_roles(room, username)
+    entry = Entry_List.query.filter_by(room=room, author=username).first()
     if entry is None:
-        entry = Entry_list( room=room,
-                            author=user,
+        entry = Entry_List( room=room,
+                            author=username,
                             success=success)
         db.session.add(entry)
         db.session.commit()
         return True
     else:
         return False
+
+def get_entry_table():
+    return Entry_List.query.all()
 
 def clear_entry_list(db, do_backup_path=''):
     return Entry_List.query.delete()

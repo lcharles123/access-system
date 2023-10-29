@@ -21,11 +21,12 @@ def create_app():
     login_manager.login_view = 'auth.login'
     login_manager.init_app(app)
     
-    if not path.exists(app.config['SQLALCHEMY_DATABASE_URI']):
-        db.app = app
-        db.drop_all()
-        db.create_all()
-        db_init.create_admin_user()
+#    if not path.exists(app.config['SQLALCHEMY_DATABASE_URI']):
+#        db.app = app
+#        db.drop_all()
+#        db.create_all()
+#        if not db_init.create_admin_user():
+#            raise Exception("create_admin_user failed")
     
     from server.database.models import User
 
