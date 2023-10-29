@@ -1,34 +1,36 @@
 {% extends 'base.html' %}
-
-{% block content %}
-    <h3>{% block title %} Add/Remove Users {% endblock %}</h3>
+{% block title_content %}     
+    <title>Cadastro de usuários - Fechadura Eletrônica</title>
+{% endblock %}
+{% block body_content %}
+    <h3>{% block title %} Adicionar usuários {% endblock %}</h3>
     <form method="post">
-        <label for="room">Room Number:</label>
+        <label for="room">Número da Sala:</label> {# <!-- TODO use dropdown menu -->#}
 
-        <input type="text" name="room_id"
-               placeholder="ex. 1111"
-               value="{{ request.form['room_id'] }}"></input>
-        <label for="enrollment">Enrollment ID:</label>
+        <input type="text" name="room"
+               placeholder="Ex.: 1111"
+               value="{{ request.form['room'] }}"></input>
+        <label for="enrollment">Matrícula:</label>
 
-        <input name="user_id"
-                  placeholder="Enrollment Number"
-                  value="{{ request.form['user_id'] }}"></input>
+        <input name="user"
+                  placeholder="Ex.: 2016065120"
+                  value="{{ request.form['user'] }}"></input>
 
-        <button type="submit">Submit</button>
+        <button type="submit">Enviar</button>
     </form>
     <br>
-    <h3> Permit List: </h3>
+    <h3> Listar Permissões: </h3>
     <table class="post" style="width:100%">
     <tr>
-        <th>ROOM</th>
-        <th>USER</th>
-        <th>DATE</th>
+        <th>Sala</th>
+        <th>Usuário</th>
+        <th>Data de concessão</th>
     </tr>
     {% for row in permissions %}
     <tr>
-        <td>{{ row['room_id'] }}</td>
-        <td>{{ row['user_id'] }}</td>
-        <td>{{ row['time'] }}</td>
+        <td>{{ row['room'] }}</td>
+        <td>{{ row['user'] }}</td>
+        <td>{{ row['created'] }}</td>
     </tr>
     {% endfor %}
 </table>

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Control Panel - Access System</title>
+    {% block title_content %} {% endblock %} 
     <style>
     	body {
   			background-color: light-blue;
@@ -49,6 +49,12 @@
             color: #088100;
             background-color: #D5FFD9;
         }
+        .alert_warn {  /* flash alerts */
+            padding: 21px;
+            margin: 2px;
+            color: #978600;
+            background-color: #FFF6AE;
+        }
         table, th, td {
           border:1px solid black;
         }
@@ -58,10 +64,20 @@
 <body>
 <nav class="header">
 	<ul>
-      <a href="{{ url_for('index') }}">Home</a> <vr>
-      <a href="{{ url_for('users') }}">Users</a>
-      <a href="{{ url_for('rooms') }}">Rooms</a>
-      <a href="{{ url_for('logout') }}">Log Out</a>
+      <a href="{{ url_for('main.index') }}">Listar Acessos</a> 
+      <a href="{{ url_for('main.users') }}">Conceder Permissões</a>
+      <a href="{{ url_for('main.rooms') }}">Cadastrar Salas</a>
+      {#% if current_user.get_username == '0' %}
+        <a href="{{ url_for('main.rooms') }}">Cadastrar Salas</a>
+      {% endif %#}
+      {% if current_user.is_authenticated %}
+        <a href="{{ url_for('auth.logout') }}">Sair</a>       
+      {% else %}
+        <a href="{{ url_for('auth.login') }}">Entrar</a> 
+      {% endif %}
+      
+      <a href="{{ url_for('main.help') }}">Ajuda</a> 
+      <a href="/api">API</a> 
 </ul>
      </nav>
 
@@ -71,7 +87,7 @@
             <div class="{{ type }}">{{ message }}</div>
         {% endfor %}
 
-        {% block content %} {% endblock %}
+        {% block body_content %} {% endblock %}
     </div>
 </body>
 </html>
