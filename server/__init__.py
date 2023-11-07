@@ -47,4 +47,14 @@ def create_app():
     
     return app
 
+#flask run --cert adhoc for auto signed
+'''
+if __name__ == "__main__":
+    app = create_app()
+    #app.run(ssl_context=("cert.pem", "key.pem")) #TODO point it to keys
+    app.run()'''
+#create a self signed and configure on the command line, can be used to deploy too
+#openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
+#flask run --cert=cert.pem --key=key.pem
+#app.run(port=5000, debug=True, host='localhost', use_reloader=True)
 
