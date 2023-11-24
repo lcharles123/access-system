@@ -21,6 +21,7 @@ help:
 	@echo "python3 -m venv venv"
 	@echo "source venv/bin/activate"
 	# Install requirements with pip
+	@echo "pip install --upgrade pip"
 	@echo "pip install -r requirements.txt"
 	# run
 	@echo "make run"
