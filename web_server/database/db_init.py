@@ -1,7 +1,7 @@
 import logging
-from server.database import db
-from server.database.operations import *
-from server.database.models import *
+from . import db
+from .operations import *
+from .models import *
 
 
 def create_admin_user():

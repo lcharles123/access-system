@@ -2,17 +2,23 @@ from flask import Flask
 
 from flask_login import LoginManager
 from os import urandom, path
-from server.api.routes import generate_api_routes
-from server.database import db, db_init
+from .api.routes import generate_api_routes
+from .database import db, db_init
 
 
 def create_app():
     app = Flask(__name__)
     
-    app.config['DEBUG'] = True
+    app.config['ENV'] = 'development'
+    # let werkzeuk deal with debug messages
+    app.config['DEBUG'] = False
     app.config['SECRET_KEY'] = urandom(12)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database/db.sqlite'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+    app.config['TEMPLATES_AUTO_RELOAD'] = True
+    app.config['MAX_CONTENT_LENGTH'] = None
+    # ensure https
+    app.config['SESSION_COOKIE_SECURE'] = False
     
     generate_api_routes(app) # from api.routes
     db.init_app(app)
@@ -28,7 +34,7 @@ def create_app():
 #        if not db_init.create_admin_user():
 #            raise Exception("create_admin_user failed")
     
-    from server.database.models import User
+    from .database.models import User
 
     @login_manager.user_loader
     def load_user(user_id):

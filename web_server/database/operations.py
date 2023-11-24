@@ -1,4 +1,4 @@
-from server.database.models import *
+from .models import *
 from bcrypt import gensalt, hashpw
 
 ''' Insert user in db
