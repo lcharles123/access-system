@@ -5,14 +5,29 @@
 {% endblock %}
 {% block body_content %}
     <h3>{% block title %} Lista de acesso às salas {% endblock %}</h3>
-    <table class="post" style="width:100%">
+    
+    <form action="/" method="POST">
+        <label for="room">Filtrar por:</label>
+        <select name="room" id="room">
+        <option value="">Todas</option>
+        
+        {# construir a lista de salas aqui #}
+        {% for room in entry_table['room'] %}
+            <option value="{{ room }}">{{ room }}</option>
+        {% endfor %}
+        </select>
+        <button type="submit">Filtrar</button>
+    </form>
+    
+    
+    <table border="1" class="post" style="width:100%">
     <tr>
         <th>Sala</th>
         <th>Nome do Usuário</th>
         <th>Data</th>
         <th>Concedido</th>
     </tr>
-    {% for row in rows %}
+    {% for row in entry_table %}
     <tr>
         <td>{{ row['room'] }}</td>
         <td>{{ row['author'] }}</td>

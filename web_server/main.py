@@ -18,9 +18,10 @@ main = Blueprint('main', __name__)
 '''
 # TODO can filter table by room, user, succeeded, date range
 
-@main.before_app_first_request
+# FIXME for debug
+'''@main.before_app_first_request
 def create_tables():
-    if not path.exists(current_app.config['SQLALCHEMY_DATABASE_URI']):
+    if not path.exists(current_app.config['SQLALCHEMY_DATABASE_URI']) or True:
         db.app = main
         db.drop_all()
         db.create_all()
@@ -29,16 +30,24 @@ def create_tables():
         db_init.create_tree_locks()
         db_init.create_tree_lock_users()
         db_init.set_tree_permissions()
-        db_init.create_tree_access()
+        db_init.create_tree_access()'''
 
 ''' List last access to locks.
 '''
-@main.route('/')
-#@login_required
+@main.route('/', methods=('GET', 'POST'))
+@login_required
 def index():
-    rows = db_oper.get_entry_table()
+    #if request.method == 'POST':
+        
+        
+        
+    
+    
+    # row like object
+    entry_table = db_oper.get_entry_table()
+    print(current_user.get_username)
     #print(rows[0].as_row)
-    return render_template('index.html', current_user=current_user, rows=rows) 
+    return render_template('index.html', current_user=current_user, entry_table=entry_table) 
     
 
 '''List all users, given a room number from a specific ldap server

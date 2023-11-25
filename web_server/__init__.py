@@ -3,10 +3,11 @@ from flask import Flask
 from flask_login import LoginManager
 from os import urandom, path
 from .api.routes import generate_api_routes
-from .database import db, db_init
+from .database import db, db_init, User
 
-
-def create_app():
+''' Configure and create the web app
+'''
+def create_app(config_file=None):
     app = Flask(__name__)
     
     app.config['ENV'] = 'development'
@@ -21,7 +22,23 @@ def create_app():
     app.config['SESSION_COOKIE_SECURE'] = False
     
     generate_api_routes(app) # from api.routes
+    
     db.init_app(app)
+    with app.app_context(): # ensures admin exists on db
+        admin = User.query.filter_by(username='0').first()
+        if admin == None:
+            db.create_all()
+            atributes={'username': '0', 
+               'email': 'admin@example.com', 
+               'password':'123', 
+               'role': 'admin'}
+            r = insert_user(db, 'admin', atributes=atributes)
+            if r:
+                logging.info("Admin was set.")
+            else:
+                logging.info("Admin already set.")
+                    db.session.add(initial_entry)
+                    db.session.commit()
     
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
