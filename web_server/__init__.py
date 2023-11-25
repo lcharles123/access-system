@@ -3,14 +3,15 @@ from flask import Flask
 from flask_login import LoginManager
 from os import urandom, path
 from .api.routes import generate_api_routes
-from .database import db, db_init, User
+from .database import db, db_init
+from . import app_config 
 
 ''' Configure and create the web app
 '''
-def create_app(config_file=None):
+def create_app(config=app_config):
     app = Flask(__name__)
-    
-    app.config['ENV'] = 'development'
+    app.config.from_object(app_config.Development())
+    '''app.config['ENV'] = 'development'
     # let werkzeuk deal with debug messages
     app.config['DEBUG'] = True
     app.config['SECRET_KEY'] = urandom(12)
@@ -19,16 +20,18 @@ def create_app(config_file=None):
     app.config['TEMPLATES_AUTO_RELOAD'] = True
     app.config['MAX_CONTENT_LENGTH'] = None
     # ensure https
-    app.config['SESSION_COOKIE_SECURE'] = False
+    app.config['SESSION_COOKIE_SECURE'] = False'''
     
     generate_api_routes(app) # from api.routes
     
     db.init_app(app)
-    with app.app_context(): # ensures admin exists on db
+    '''with app.app_context(): # ensures admin exists on db
         admin = User.query.filter_by(username='0').first()
         if admin == None:
             db.create_all()
-            atributes={'username': '0', 
+            # TODO these attributes can be passed as config file
+            atributes={'username': '0',
+               'name': 'Admin',
                'email': 'admin@example.com', 
                'password':'123', 
                'role': 'admin'}
@@ -38,7 +41,7 @@ def create_app(config_file=None):
             else:
                 logging.info("Admin already set.")
                     db.session.add(initial_entry)
-                    db.session.commit()
+                    db.session.commit()'''
     
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
