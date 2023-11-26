@@ -81,22 +81,8 @@ class User(db.Model, UserMixin):
     @property
     def as_row(self):
         return self.__dict__
-    
-    @classmethod
-    def create_db(cls):
-        # Create the database tables
-        db.create_all()
 
-        # Check if there are no entries in the Entry table
-        if cls.query.count() == 0:
-            # Add an entry to the Entry table
-            initial_entry = cls(date=datetime.utcnow())
-            db.session.add(initial_entry)
-            db.session.commit()
-            print('no entries')
-        else:
-            print('there are entries')
-            
+
 ''' Permissions table, user room
     @schema: Permissions(room(fk), user(fk), created, key)
 '''
@@ -181,7 +167,3 @@ class Entry_List(db.Model, UserMixin):
     def as_row(self):
         return self.__dict__
         
-    
-    
-    
-    

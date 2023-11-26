@@ -7,9 +7,6 @@ from flask_login import login_required, current_user
 from flask_restful import Resource, Api  
 from os import path
 
-
-#FIXME remove after factoration
-BASE_DIR = path.dirname(path.abspath(__file__))
 main = Blueprint('main', __name__)
 
 
@@ -18,7 +15,7 @@ main = Blueprint('main', __name__)
 '''
 # TODO can filter table by room, user, succeeded, date range
 
-# FIXME for debug
+# FIXME sent to doing tests
 '''@main.before_app_first_request
 def create_tables():
     if not path.exists(current_app.config['SQLALCHEMY_DATABASE_URI']) or True:

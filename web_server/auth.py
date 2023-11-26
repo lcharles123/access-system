@@ -15,7 +15,7 @@ def login():
 def login_post():
     username = request.form.get('username')
     password = request.form.get('password')
-    remember = True if request.form.get('remember') else False
+    remember = request.form.get('remember') == True
     user = None
     if username in ['admin', '0']:
         user = User.query.filter_by(username='0', role='admin').first()

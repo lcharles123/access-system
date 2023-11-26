@@ -12,7 +12,7 @@ test:
 
 
 clean:
-	rm -rf __pycache__
+	rm -rf __pycache__ /tmp/foo.db database/database.sqlite 
 
 help: 
 	# steps to build and run:
