@@ -8,16 +8,22 @@ from .database.models import User
 from . import app_config
 
 ''' Configure and create the web app
+    Need to specify a config class constructor
 '''
-def create_app():
+def create_app(config_type=app_config.Development):
     app = Flask(__name__)
-    app.config.from_object(app_config.Development())
+    app.config.from_object(config_type())
     
     generate_api_routes(app) # from api.routes
-
+    
+    
+    
     db.init_app(app)
     db.app = app
     with app.app_context():
+        # FIXME remove after having tests
+        db.drop_all()
+        
         db.create_all()  
         u = User.query.filter_by(username='0').first()
         if u == None:

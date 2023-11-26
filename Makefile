@@ -7,9 +7,20 @@ run:
 runprod:
 	sh run.sh
 
-test:
-	sh pytest
+all_tests: 
+	python3 -m unittest discover -s test
 
+#t: integration_test.py system_usecases_test.py  unit_test.py
+t: unit_test.py
+
+integration_test.py:
+	python3 -m unittest web_server/test/$@
+
+system_usecases_test.py:
+	python3 -m unittest web_server/test/$@
+
+unit_test.py:
+	python3 -m unittest web_server/test/$@
 
 clean:
 	rm -rf __pycache__ /tmp/foo.db database/database.sqlite 

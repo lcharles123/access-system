@@ -2,7 +2,6 @@ from .models import *
 from . import db
 from bcrypt import gensalt, hashpw
 from datetime import datetime, timedelta
-from apscheduler.schedulers.background import BackgroundScheduler
 
 
 def get_user(username):
@@ -102,10 +101,7 @@ def check_permission(db, room, user):
 
 def get_permission_table():
     return Permissions.query.all()
-
-
-
-
+    
 
 ''' Operations perfomed on Entry_List
     This table is insert_only and clear old than x days from now
@@ -129,19 +125,5 @@ def get_entry_table():
 ''' For deleting all entries, only system admin can do it
 '''
 def clear_entry_list(db, do_backup_path=''):
-    
     return Entry_List.query.delete()
-
-''' This is a scheduled job to clean periodically
-    The entries is granted to have at least 6 months before cleanup
-''' 
-
-def delete_entries_old_than(days=366/2 + 1):
-    days_ago = datetime.utcnow() - timedelta(days=days)
-    Entry.query.filter(Entry.date < days_ago).delete()
-    db.session.commit()
-
-scheduler = BackgroundScheduler()
-scheduler.start()
-scheduler.add_job(delete_entries_old_than, trigger='cron', hour=0, minute=0)
 

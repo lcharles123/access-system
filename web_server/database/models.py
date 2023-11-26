@@ -2,7 +2,7 @@ from sqlalchemy.orm import validates
 from sqlalchemy import ForeignKey
 from . import db
 from flask_login import UserMixin
-from datetime import datetime
+from datetime import datetime, timedelta
 import re
 import bcrypt
 
@@ -105,6 +105,10 @@ class Permissions(db.Model):
             raise ValueError('user must be a user with user.role == lock_user')
         return value
     created = db.Column(db.DateTime, default=datetime.utcnow)
+    expires = db.Column(db.Boolean, default=False)
+    # set as needed
+    expiration_date = db.Column(db.DateTime, default=(datetime.utcnow() + timedelta(days=180)))
+    
     key = db.Column(db.String(64)) #FIXME ajust as needed
     
     def get_username(self):
