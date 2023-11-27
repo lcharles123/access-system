@@ -6,7 +6,7 @@ from os import urandom
     https://flask.palletsprojects.com/en/2.3.x/config/
 '''
 
-class Config:
+class Basic_Config:
     DEBUG = False
     SECRET_KEY = urandom(12)
     # dict_like to overwrite on Production mode
@@ -16,8 +16,25 @@ class Config:
     ADMIN_PASSWD = '123'
     FLASK_RUN_RELOADER = False
 
-class Production(Config):
+
+class Development(Basic_Config):
+    ENV = "development"
+    SQLALCHEMY_DATABASE_URI = "sqlite:////tmp/foo.db"
+    DEBUG = True
+    SQLALCHEMY_TRACK_MODIFICATIONS = True
+    TEMPLATES_AUTO_RELOAD = True
+    MAX_CONTENT_LENGTH = None
+    SERVER_NAME = "localhost:5000"
+    SESSION_COOKIE_SECURE = False
+
+class Testing(Development):
+    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    TESTING = True
+    TEMPLATES_AUTO_RELOAD = False
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
     
+    
+class Production(Basic_Config):
     ENV = "production"
     SQLALCHEMY_DATABASE_URI = "sqlite:///database/database.sqlite"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -29,18 +46,4 @@ class Production(Config):
     ADMIN_EMAIL = 'admin@example.com' 
     ADMIN_PASSWD = '123'
 
-
-class Development(Config):
-    ENV = "development"
-    SQLALCHEMY_DATABASE_URI = "sqlite:////tmp/foo.db"
-    DEBUG = True
-    SQLALCHEMY_TRACK_MODIFICATIONS = True
-    TEMPLATES_AUTO_RELOAD = True
-    MAX_CONTENT_LENGTH = None
-    SERVER_NAME = "localhost:5000"
-    SESSION_COOKIE_SECURE = False
-
-class Testing(Development):
-    DATABASE_URI = "sqlite:///:memory:"
-    
 

@@ -16,7 +16,7 @@ class User(db.Model, UserMixin):
     __tablename__ = 'user'
     # username can be 0 (admin), room number(4 digits), 
     # enrollment id(10 digits), user(#TODO check if there is a unique id in this case)
-    username = db.Column('username', db.String(32), unique=True)
+    username = db.Column('username', db.String(32), unique=True, nullable=False)
     @validates('username')
     def validate_username(self, key, username):
         value = None
@@ -31,9 +31,9 @@ class User(db.Model, UserMixin):
             elif len(username) <= 10 and value > 0:
                 return username
             else:
-                raise ValueError("'"+username+"' must be in the range: [1, 9999999999].")
+                raise ValueError("'"+username+"' must be in the range: [0, 9999999999].")
 
-    name = db.Column(db.String(64))
+    name = db.Column(db.String(64), nullable=False)
     email = db.Column(db.String(64))
     @validates('email')
     def validate_email(self, key, email): 
@@ -43,9 +43,9 @@ class User(db.Model, UserMixin):
             raise ValueError("Invalid email address: '"+email+"'")
         return email.lower()
 
-    password = db.Column(db.String(64)) # TODO hashed passwd
+    password = db.Column(db.String(64), nullable=False)
     created = db.Column(db.DateTime, default=datetime.utcnow)
-    role = db.Column(db.String) # can be admin, user, lock, lock_user
+    role = db.Column(db.String, nullable=False) # can be admin, user, lock, lock_user
     @validates('role')
     def validate_role(self, key, role):
         if role not in ['admin', 'user', 'lock', 'lock_user']:
@@ -89,21 +89,26 @@ class User(db.Model, UserMixin):
 class Permissions(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     __tablename__ = 'permissions'
-    room = db.Column(db.String(255), db.ForeignKey('user.username'), nullable=True)
+    room = db.Column(db.String(255), db.ForeignKey('user.username'), nullable=False)
     @validates('room')
     def validate_room(self, key, value):
-        user = User.query.get(value)
-        if not user or user.role != 'lock':
+        User.query.filter_by(username=value).first()
+        return value
+        user = User.query.filter_by(username=value).first()
+        
+        if user and user.role != 'lock':
             raise ValueError('room must be a user with user.role == lock')
         return value
         
-    user = db.Column(db.String(255), db.ForeignKey('user.username'), nullable=True)
+    user = db.Column(db.String(255), db.ForeignKey('user.username'), nullable=False)
     @validates('user')
     def validate_user(self, key, value):
-        user = User.query.get(value)
-        if not user or user.role != 'lock_user':
+        return value
+        user = User.query.filter_by(username=value).first()
+        if user and user.role != 'lock_user':
             raise ValueError('user must be a user with user.role == lock_user')
         return value
+
     created = db.Column(db.DateTime, default=datetime.utcnow)
     expires = db.Column(db.Boolean, default=False)
     # set as needed
@@ -133,8 +138,8 @@ class Entry_List(db.Model, UserMixin):
     #author = db.Column(db.Integer, db.ForeignKey('user.username', ondelete='SET NULL', onupdate='SET NULL', deferrable=True), nullable=True)
     
     #room = db.Column(db.Integer, db.ForeignKey('user.username', ondelete='SET NULL', onupdate='SET NULL', deferrable=True), nullable=True)
-    room = db.Column(db.String(64)) #FIXME make a relation here
-    author = db.Column(db.String(64)) #FIXME make a relation here
+    room = db.Column(db.String(64), nullable=False) #FIXME ensures exists on User table
+    author = db.Column(db.String(64), nullable=False) #FIXME ensures exists on User table
 
     #@staticmethod
     #def author(role):
@@ -149,7 +154,7 @@ class Entry_List(db.Model, UserMixin):
     #room = db.Column(db.Integer, db.ForeignKey('room_ref.username'))
     
     date = db.Column(db.DateTime, default=datetime.utcnow)
-    success = db.Column(db.Boolean, nullable=False, default=False)
+    granted = db.Column(db.Boolean, nullable=False, default=False)
     
      # properties implemented in UserMixin
     def is_active(self):
