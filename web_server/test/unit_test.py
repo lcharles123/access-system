@@ -3,9 +3,10 @@ from datetime import datetime
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker, declarative_base
 from flask.ctx import AppContext
-from web_server.database.models import User, Permissions, Entry_List  # Replace with the actual module name
+from web_server.database.models import User, Permissions, Entry_List
 from web_server.database import db
 from web_server.database import operations as op
+from bcrypt import checkpw 
 from web_server import app_config
 
 class Test_Database_Models(unittest.TestCase):
@@ -17,7 +18,7 @@ class Test_Database_Models(unittest.TestCase):
     def tearDown(self):
         self.session.rollback()
         self.session.close()
-    # auxiliary functions
+    # auxiliary function
     def aux_add_commit(self, user):
         self.session.add(user)
         self.session.commit()
@@ -152,31 +153,15 @@ class Test_Database_Models(unittest.TestCase):
         self.assertIsNotNone(entry1)
         self.assertTrue(entry1.granted)
         
-        self.assertEqual(self.session.query(User).count(), 1) 
-        self.session.delete(user1)
-        self.assertEqual(self.session.query(User).count(), 0)
+        self.assertEqual(self.session.query(Entry_List).count(), 1) 
+        self.session.delete(entry1)
+        self.assertEqual(self.session.query(Entry_List).count(), 0)
 
-'''
-        # Create test users
-        user1 = User(username='user1', name='User 1', email='user1@example.com', password='password1')
-        user2 = User(username='user2', name='User 2', email='user2@example.com', password='password2')
-
-        self.session.add_all([user1, user2])
-        self.session.commit()
-
-        # Insert permissions
-        permissions = Permissions(username_1='user1', username_2='user2')
-        self.session.add(permissions)
-        self.session.commit()
-
-        # Check if permissions are inserted correctly
-        self.assertEqual(self.session.query(Permissions).count(), 1)
-'''
 class Test_Database_Operations(unittest.TestCase):
     def setUp(self):
         from flask import Flask
         self.app = Flask(__name__)
-        self.app.config.from_object(config_type())
+        self.app.config.from_object(app_config.Testing())
         db.init_app(self.app)
         with self.app.app_context():
             db.create_all()
@@ -185,192 +170,209 @@ class Test_Database_Operations(unittest.TestCase):
         with self.app.app_context():
             db.drop_all()
     
-    '''def test_permissions_inserting(self):
-        # Create test users
-        user1 = User(username='user1', name='User 1', email='user1@example.com', password='password1')
-        user2 = User(username='user2', name='User 2', email='user2@example.com', password='password2')
-
-        self.session.add_all([user1, user2])
-        self.session.commit()
-
-        # Insert permissions
-        permissions = Permissions(username_1='user1', username_2='user2')
-        self.session.add(permissions)
-        self.session.commit()
-
-        # Check if permissions are inserted correctly
-        self.assertEqual(self.session.query(Permissions).count(), 1)'''
-
     def test_get_user(self):
-        pass
-
+        userattr={'username': '1235', 
+                   'email': 'someuser@example.com', 
+                   'name': 'user1',
+                   'password':'123'}
+        with self.app.app_context():
+            self.assertTrue(op.insert_user(db, 'user', atributes=userattr))
+            self.assertTrue(op.get_user('1235'))
+        
     def test_insert_and_cannot_remove_admin_user(self):
-        pass
+        # ensured admin is username == 0
+        admin_user={'username': '0', 
+                   'email': 'admin@example.com', 
+                   'name': 'Admin',
+                   'password':'123'}
+        with self.app.app_context():
+            self.assertTrue(op.insert_user(db, 'admin', atributes=admin_user))
+            self.assertFalse(op.remove_user(db, '0'))
+            
+    def test_passwords_hashed_using_bcrypt_hashpw(self):
+        admin_user={'username': '0', 
+                   'email': 'admin@example.com', 
+                   'name': 'Admin',
+                   'password':'123'}
+        with self.app.app_context():
+            self.assertTrue(op.insert_user(db, 'admin', atributes=admin_user))
+            user = op.get_user('0')
+            self.assertTrue(checkpw(('123').encode(), user.password))
+    
+    def test_insert_and_cannot_have_more_than_one_admin(self):
+        admin_user={'username': '0', 
+                   'email': 'adm4in@example.com', 
+                   'name': 'Ad4min',
+                   'password':'123'}
+        with self.app.app_context():
+            self.assertTrue(op.insert_user(db, 'admin', atributes=admin_user))
+            self.assertFalse(op.insert_user(db, 'admin', atributes=admin_user))
 
-    def test_insert_and_remove_regular_user(self):
-        pass
+    def test_can_not_insert_other_user_as_admin(self):
+        other_user={'username': '2020001234',
+                    'email': 'admin@example.com', 
+                    'name': 'other user',
+                    'password':'123'}
+        with self.app.app_context():
+            self.assertFalse(op.insert_user(db, 'admin', atributes=other_user))
+            
+    def test_can_not_insert_admin_as_other_user(self):
+        admin_user={'username': '0', 
+                  'email': 'admin@example.com', 
+                  'name': 'Admin',
+                  'password':'123'}
+        with self.app.app_context():
+            self.assertFalse(op.insert_user(db, 'lock_user', atributes=admin_user))
+            self.assertFalse(op.insert_user(db, 'user', atributes=admin_user))
+            self.assertFalse(op.insert_user(db, 'lock', atributes=admin_user))
+    
+    def test_can_not_insert_lock_user_as_admin_or_lock(self):
+        # assuming username of lock_user is 10 char len
+        # admin is 1 char len
+        # lock is 4 char len
+        lock_user={'username': '2020001234', 
+                  'email': 'user1@example.com', 
+                  'name': 'User1',
+                  'password':'123'}
+        with self.app.app_context():
+            self.assertFalse(op.insert_user(db, 'admin', atributes=lock_user))
+            self.assertFalse(op.insert_user(db, 'lock', atributes=lock_user))
+    
+    def test_insert_and_remove_lock(self):
+        lock={'username': '1233', 
+                   'email': 'lock1@example.com', 
+                   'name': 'lock1',
+                   'password':'123'}
+        with self.app.app_context():
+            self.assertTrue(op.insert_user(db, 'lock', atributes=lock))
+            self.assertTrue(op.get_user('1233'))
+            self.assertTrue(op.remove_user(db, '1233'))
+            self.assertFalse(op.get_user('1233'))
 
     def test_insert_and_remove_lock_user(self):
-        pass
+        lock_user={'username': '2020001234', 
+                   'email': 'user1@example.com', 
+                   'name': 'user1',
+                   'password':'123'}
+        with self.app.app_context():
+            self.assertTrue(op.insert_user(db, 'lock_user', atributes=lock_user))
+            self.assertTrue(op.get_user('2020001234'))
+            self.assertTrue(op.remove_user(db, '2020001234'))
+            self.assertFalse(op.get_user('2020001234'))
 
-    def test_insert_and_remove_lock_user_user(self):
-        pass
+class Test_Database_Operations_Permission_And_Entry_List(unittest.TestCase):
+    # here setup will populate the table with one user each
+    def setUp(self):
+        from flask import Flask
+        self.app = Flask(__name__)
+        self.app.config.from_object(app_config.Testing())
+        db.init_app(self.app)
+        with self.app.app_context():
+            db.create_all()
+            one_admin = User(username='0', name='Admin', 
+                    email='admin@example.com', password='123', role='admin')
+            one_user = User(username='100099', name='', 
+                    email='admin1@example.com', password='123', role='user')
+            one_lock = User(username='1111', name='1111 lab1', 
+                    email='email1111@example.com', password='123', role='lock')
+            two_lock = User(username='2222', name='2222 lab', 
+                    email='email2222@example.com', password='123', role='lock')
+            one_lock_user = User(username='2020001111', name='Lock User1', 
+                    email='LockUser1@example.com', password='123', role='lock_user')
+            two_lock_user = User(username='2020002222', name='Lock User old', 
+                    email='User@example.com', password='123', role='lock_user')
+            db.session.add_all([one_admin, one_user, one_lock, two_lock, one_lock_user, two_lock_user])
+            db.session.commit()
+    def tearDown(self):
+        with self.app.app_context():
+            db.drop_all()
 
     def test_set_permission_from_user_to_lock_and_check_them(self):
-        pass
-
+        with self.app.app_context():
+            self.assertTrue(op.set_permission(db, '1111', '2020001111'))
+            self.assertEqual(op.get_permission_table().count(), 1)
+            self.assertTrue(op.check_permission(db, '1111', '2020001111'))
+            
     def test_try_setting_permissions_and_failing_for_incompatible_roles(self):
-        pass
-
-    def test_get_all_table_users(self):
-        pass
+        with self.app.app_context():
+            self.assertFalse(op.set_permission(db, '2222', '100099'))
+            self.assertFalse(op.set_permission(db, '2222', '2222'))
+            self.assertFalse(op.set_permission(db, '2020001111', '2020002222'))
+            self.assertFalse(op.set_permission(db, '2020002222', '2222'))
+            self.assertEqual(op.get_permission_table().count(), 0)
 
     def test_set_and_revoke_permission(self):
-        pass
+        with self.app.app_context():
+            self.assertTrue(op.set_permission(db, '2222', '2020002222'))
+            self.assertEqual(op.get_permission_table().count(), 1)
+            self.assertTrue(op.revoke_permission(db, '2222', '2020002222'))
+            self.assertFalse(op.check_permission(db, '2222', '2020002222'))
+            self.assertEqual(op.get_permission_table().count(), 0)
 
     def test_get_permission_table(self):
-        pass
-
-    def test_insert_entry_list(self):
-        pass
-
-    def test_can_not_insert_entry_list_incompatible_roles(self):
-        pass
-    def test_get_entry_table(self):
-
-        pass
-
-    def test_clear_entry_list(self):
-        pass
-
-    def test_validate_room_as_user_model_in_permissions_table(self):
-        pass
-
-    def test_validate_author_as_user_model_in_permissions_table(self):
-        pass
+        with self.app.app_context():
+            self.assertTrue(op.set_permission(db, '1111', '2020001111'))
+            self.assertTrue(op.set_permission(db, '1111', '2020002222'))
+            self.assertFalse(op.set_permission(db, '9999', '2020002222'))
+            self.assertFalse(op.set_permission(db, '1111', '2020002222'))
+            self.assertEqual(op.get_permission_table().count(), 2)
 
     def test_validate_entries_in_entry_table(self):
-        pass
+        with self.app.app_context():
+            self.assertFalse(insert_entry_list(db, '2345', '2020002222', True))
+            self.assertEqual(get_permission_table().count(), 0)
 
-'''
-def get_user(username):
-    return User.query.filter_by(username=username).first()
-
-def insert_user(db, role, atributes={}):
-    # check required atributes
-    user = None
-    try:
-        if atributes['username'] == '' or \
-           atributes['password'] == '':
-            raise Exception()
-    except:
-        raise ValueError("'username' and 'password' required for all users.")
-    if role == 'admin' or 'username' == '0':
-        atributes['username'] = '0'
-        atributes['name'] = 'admin'
-        try:
-            if atributes['email'] == '':
-                raise Exception()
-        except:
-            raise ValueError("Email required for admin user.")
-    elif role in ['user', 'lock', 'lock_user']:
-        try:
-            if atributes['name'] == '':
-                raise Exception()
-        except:
-            raise ValueError("Name required for user lock and lock_user.")
-    else:
-        raise ValueError("'role' must be one of ['admin', 'user', 'lock', 'lock_user']")
+    def test_validate_room_in_permissions_table(self):
+        with self.app.app_context():
+            self.assertTrue(op.set_permission(db, '1111', '2020002222'))
+            self.assertFalse(op.set_permission(db, '2020001111', '2020002222'))
+            self.assertFalse(op.set_permission(db, 'sdfgdfsdfg', '2020002222'))
+            self.assertFalse(op.set_permission(db, '7777', '2020001111'))
+            self.assertEqual(op.get_permission_table().count(), 1)
+            
+    def test_validate_author_in_permissions_table(self):
+        with self.app.app_context():
+            self.assertTrue(op.set_permission(db, '1111', '2020002222', False))
+            self.assertFalse(op.set_permission(db, '9999', '2020002222', False))
+            self.assertFalse(op.set_permission(db, '1111', 'asdfasdf'))
+            self.assertEqual(op.get_permission_table().count(), 1)
     
-    user = User.query.filter_by(username=atributes['username']).first()
-    if user is None:
-        email = ''
-        try: email = atributes['email']
-        except: pass
-        user = User(username=atributes['username'], 
-                    name=atributes['name'], 
-                    email=email, 
-                    password=hashpw(str(atributes['password']).encode(), gensalt()), 
-                    role=role)
-        db.session.add(user)
-        db.session.commit()
-        return True
-    else:
-        return False
+    def test_get_all_permission_table_users(self):
+        with self.app.app_context():
+            self.assertTrue(op.set_permission(db, '2222', '2020002222', True))
+            self.assertTrue(op.set_permission(db, '1111', '2020002222', False))
+            self.assertTrue(op.set_permission(db, '1111', '2020001111', True))
+            self.assertEqual(op.get_permission_table().count(), 3)
 
-def remove_user(db, username):
-    user = get_user(username)
-    if user is not None:
-        if user.role == 'admin' or username == '0':
-            raise ValueError("Can not remove 'admin' user.")
-        db.session.delete(user)
-        db.session.commit()
-        return True
-    else:
-        return False
-
-def get_all_table_users(role):
-    return User.query.filter_by(role=role).all()
-def is_valid_user(username, role):
-    return User.query.filter_by(username=username, role=role).first() is not None
-
-
-def set_permission(db, room, user):
-    p = Permissions.query.filter_by(room=room, user=user).first()
-    if p is None:
-        p = Permissions(room=room, user=user)
-        db.session.add(p)
-        db.session.commit()
-        return True
-    else:
-        return False
-
-def revoke_permission(db, room, user):
-    p = Permissions.query.filter_by(room=room, user=user).first()
-    if p is not None:
-        db.session.delete(p)
-        db.session.commit()
-        return True
-    else:
-        return False
-
-def check_permission(db, room, user):
-    return Permissions.query.filter_by(room=room, user=user).first() is not None
-
-def get_permission_table():
-    return Permissions.query.all()
+    def test_insert_entry_list(self):
+        with self.app.app_context():
+            self.assertTrue(op.insert_entry_list(db, '2222', '2020001111', True))
+            self.assertFalse(op.insert_entry_list(db, '2020001111', '2344', False))
+            self.assertFalse(op.insert_entry_list(db, '1111', '2020009999', True))
+            self.assertEqual(op.get_entry_table().count(), 1)
     
-
-
-def insert_entry_list(db, room, username, success):
-    # checks(room, username) roles are made in model definition
-    entry = Entry_List.query.filter_by(room=room, author=username).first()
-    if entry is None:
-        entry = Entry_List( room=room,
-                            author=username,
-                            success=success)
-        db.session.add(entry)
-        db.session.commit()
-        return True
-    else:
-        return False
-
-def get_entry_table():
-    return Entry_List.query.all()
-
-
-def clear_entry_list(db, do_backup_path=''):
-    return Entry_List.query.delete()
-    # Add similar test methods for removing and purging permissions, and for Entry_List operations
-    ''''''
-class Test_Database_Sched_Operations(unittest.TestCase):
+    def test_check_granted_entry_list(self):
+        with self.app.app_context():
+            self.assertTrue(op.insert_entry_list(db, '2222', '2020001111', True))
+            self.assertTrue(op.get_entry_table().first().granted)
+            
+    def test_check_denied_entry_list(self):
+        with self.app.app_context():
+            self.assertTrue(op.insert_entry_list(db, '2222', '2020001111', False))
+            self.assertFalse(op.get_entry_table().first().granted)
     
+    def test_get_entry_table(self):
+        with self.app.app_context():
+            self.assertTrue(op.insert_entry_list(db, '2222', '2020002222', True))
+            self.assertTrue(op.insert_entry_list(db, '1111', '2020002222', False))
+            self.assertTrue(op.insert_entry_list(db, '1111', '2020001111', True))
+            self.assertEqual(op.get_entry_table().count(), 3)
     
-    def test_clear_database_older_than_x_days(self):
-        pass
+    def test_clear_entry_list(self):
+        with self.app.app_context():
+            self.assertTrue(op.clear_entry_list())
+            self.assertEqual(op.get_entry_table().count(), 0)
 
-    def test_revoke_permissions_with_expiration_date(self):
-        pass'''
 
 if __name__ == '__main__':
     unittest.main()

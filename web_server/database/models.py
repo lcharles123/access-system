@@ -20,7 +20,6 @@ class User(db.Model, UserMixin):
     @validates('username')
     def validate_username(self, key, username):
         value = None
-        username = username.lower()
         try:
             value = int(username)
         except:
@@ -37,6 +36,7 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(64))
     @validates('email')
     def validate_email(self, key, email): 
+        email = email.lower()
         pattern = r'[a-z0-9_.-]+@[a-z0-9\-]+\.[a-z0-9\-.]+$'
         # email can be '' for lock
         if not re.match(pattern, email) and email != '':
@@ -139,20 +139,21 @@ class Entry_List(db.Model, UserMixin):
     
     #room = db.Column(db.Integer, db.ForeignKey('user.username', ondelete='SET NULL', onupdate='SET NULL', deferrable=True), nullable=True)
     room = db.Column(db.String(64), nullable=False) #FIXME ensures exists on User table
+    @validates('room')
+    def validate_room(self, key, value):
+        User.query.filter_by(username=value, role='lock').first()
+        if user == None:
+            raise ValueError('room must be a user with user.role == lock')
+        return value
     author = db.Column(db.String(64), nullable=False) #FIXME ensures exists on User table
+    @validates('author')
+    def validate_user(self, key, value):
+        return value
+        user = User.query.filter_by(username=value).first()
+        if user and user.role != 'lock_user':
+            raise ValueError('user must be a user with user.role == lock_user')
+        return value
 
-    #@staticmethod
-    #def author(role):
-    #    return 'user.username', 'user.role', {'role': role, 'nullable': True}
-
-    #@staticmethod
-    #def room(role):
-    #    return 'user.username', 'user.role', {'role': role, 'nullable': True}
-
-    #author = db.Column(db.Integer, db.ForeignKey('author_ref.username'))
-    
-    #room = db.Column(db.Integer, db.ForeignKey('room_ref.username'))
-    
     date = db.Column(db.DateTime, default=datetime.utcnow)
     granted = db.Column(db.Boolean, nullable=False, default=False)
     

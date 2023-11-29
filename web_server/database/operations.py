@@ -13,6 +13,7 @@ def get_user(username):
     @param atributes: dict like with {User.atributes : value}
     @return True if inserted, False otherwise
     @except ValueError when input data are incorrect
+    # The exception trowing here is important to guarante a transparent inserting
 '''
 def insert_user(db, role, atributes={}):
     # check required atributes
@@ -23,9 +24,10 @@ def insert_user(db, role, atributes={}):
             raise Exception()
     except:
         raise ValueError("'username' and 'password' required for all users.")
-    if role == 'admin' or 'username' == '0':
-        atributes['username'] = '0'
-        atributes['name'] = 'admin'
+    if role == 'admin' or atributes['username'] == '0':
+        if atributes['username'] != '0' or role != 'admin':
+            return False 
+        atributes['name'] = 'Admin'
         try:
             if atributes['email'] == '':
                 raise Exception()
@@ -33,6 +35,11 @@ def insert_user(db, role, atributes={}):
             raise ValueError("Email required for admin user.")
     elif role in ['user', 'lock', 'lock_user']:
         try:
+            if role == 'lock_user' and len(atributes['username']) != 10:
+                return False
+            if role == 'lock' and len(atributes['username']) != 4:
+                return False
+            
             if atributes['name'] == '':
                 raise Exception()
         except:
@@ -52,18 +59,16 @@ def insert_user(db, role, atributes={}):
                     role=role)
         db.session.add(user)
         db.session.commit()
-        return True
+        return get_user(atributes['username']) != None
     else:
         return False
 
 def remove_user(db, username):
     user = get_user(username)
-    if user is not None:
-        if user.role == 'admin' or username == '0':
-            raise ValueError("Can not remove 'admin' user.")
+    if user != None and user.role != 'admin' and username != '0':    
         db.session.delete(user)
         db.session.commit()
-        return True
+        return get_user(username) == None
     else:
         return False
 
@@ -106,13 +111,16 @@ def get_permission_table():
 ''' Operations perfomed on Entry_List
     This table is insert_only and clear old than x days from now
 '''
-def insert_entry_list(db, room, username, success):
+def insert_entry_list(db, room, username, granted):
     # checks(room, username) roles are made in model definition
     entry = Entry_List.query.filter_by(room=room, author=username).first()
     if entry is None:
-        entry = Entry_List( room=room,
-                            author=username,
-                            success=success)
+        try:
+            entry = Entry_List( room=room,
+                                author=username,
+                                granted=granted)
+        except: 
+            return False
         db.session.add(entry)
         db.session.commit()
         return True
@@ -125,5 +133,6 @@ def get_entry_table():
 ''' For deleting all entries, only system admin can do it
 '''
 def clear_entry_list(db, do_backup_path=''):
-    return Entry_List.query.delete()
+    Entry_List.query.delete()
+    return Entry_List.query.all().count() == 0
 
