@@ -59,23 +59,6 @@ class Test_Database_Models(unittest.TestCase):
         with self.assertRaises(Exception):
             self.aux_add_commit(user)
     
-    def test_not_nullable_entry_list_author(self):
-        null_author = Entry_List(room='1111', author=None)
-        with self.assertRaises(Exception):
-            self.aux_add_commit(null_author)
-
-    def test_not_nullable_entry_list_room(self):
-        null_room = Entry_List(room=None, author='1111223333')
-        with self.assertRaises(Exception):
-            self.aux_add_commit(null_room)
-
-    def test_not_raises_creation_entry_list_entry(self):
-        try:
-            not_null = Entry_List(room='1111', author='1111223333')
-            self.aux_add_commit(not_null)
-        except:
-            self.fail("room and author should be not null")
-    
     def test_username_validation_positive(self):
         with self.assertRaises(Exception):
             User(username='-1', name='lock1', role='lock', password='123')
@@ -132,32 +115,7 @@ class Test_Database_Models(unittest.TestCase):
         self.session.delete(user1)
         self.assertEqual(self.session.query(User).count(), 0)
 
-    def test_can_create_and_delete_lock_users(self):
-        user = User(username='1234121234', name='user1', role='lock_user', password='123')
-        self.aux_add_commit(user)
-        user1 = self.session.query(User).filter_by(username='1234121234').first()
-        
-        self.assertIsNotNone(user1)
-        self.assertEqual(user1.role, 'lock_user')
-        self.assertIsNone(user1.email)
-        
-        self.assertEqual(self.session.query(User).count(), 1) 
-        self.session.delete(user1)
-        self.assertEqual(self.session.query(User).count(), 0)
-
-    def test_can_create_and_delete_entry_list(self):
-        entry = Entry_List(room='1234', author='1234001234', granted=True)
-        self.aux_add_commit(entry)
-        entry1 = self.session.query(Entry_List).filter_by(room='1234', author='1234001234').first()
-        
-        self.assertIsNotNone(entry1)
-        self.assertTrue(entry1.granted)
-        
-        self.assertEqual(self.session.query(Entry_List).count(), 1) 
-        self.session.delete(entry1)
-        self.assertEqual(self.session.query(Entry_List).count(), 0)
-
-class Test_Database_Operations(unittest.TestCase):
+class Test_Database_Operations_User(unittest.TestCase):
     def setUp(self):
         from flask import Flask
         self.app = Flask(__name__)
@@ -165,7 +123,7 @@ class Test_Database_Operations(unittest.TestCase):
         db.init_app(self.app)
         with self.app.app_context():
             db.create_all()
-
+            self.session = db.session()
     def tearDown(self):
         with self.app.app_context():
             db.drop_all()
@@ -259,6 +217,46 @@ class Test_Database_Operations(unittest.TestCase):
             self.assertTrue(op.get_user('2020001234'))
             self.assertTrue(op.remove_user(db, '2020001234'))
             self.assertFalse(op.get_user('2020001234'))
+    
+    def test_can_create_and_delete_lock_users(self):
+        user = User(username='1234121234', name='user1', role='lock_user', password='123')
+        self.session.add(user)
+        self.session.commit()
+        user1 = self.session.query(User).filter_by(username='1234121234').first()
+        
+        self.assertIsNotNone(user1)
+        self.assertEqual(user.role, 'lock_user')
+        self.assertIsNone(user.email)
+        
+        self.assertEqual(self.session.query(User).count(), 1) 
+        with self.app.app_context():
+            self.session.delete(user1)
+        self.assertEqual(self.session.query(User).count(), 0)
+
+    def test_not_nullable_entry_list_author(self):
+        with self.app.app_context():
+            null_author = Entry_List(room='1111', author=None)
+            with self.assertRaises(Exception):
+                self.aux_add_commit(null_author)
+    
+    def test_not_nullable_entry_list_room(self):
+        with self.app.app_context():
+            null_room = Entry_List(room=None, author='1111223333')
+            with self.assertRaises(Exception):
+                self.aux_add_commit(null_room)
+    
+    def test_raises_creation_entry_list_entry_wieh_user_not_existent(self):
+        with self.assertRaises(Exception): 
+            not_null = Entry_List(room='1111', author=None)
+            
+    def test_not_nullable_entry_list_author(self):
+        with self.assertRaises(Exception):
+            Entry_List(room='1111', author=None)
+    
+    def test_not_nullable_entry_list_room(self):
+        with self.assertRaises(Exception):
+            Entry_List(room=None, author='1111223333')
+
 
 class Test_Database_Operations_Permission_And_Entry_List(unittest.TestCase):
     # here setup will populate the table with one user each
@@ -290,7 +288,7 @@ class Test_Database_Operations_Permission_And_Entry_List(unittest.TestCase):
     def test_set_permission_from_user_to_lock_and_check_them(self):
         with self.app.app_context():
             self.assertTrue(op.set_permission(db, '1111', '2020001111'))
-            self.assertEqual(op.get_permission_table().count(), 1)
+            self.assertEqual(len(op.get_permission_table()), 1)
             self.assertTrue(op.check_permission(db, '1111', '2020001111'))
             
     def test_try_setting_permissions_and_failing_for_incompatible_roles(self):
@@ -299,15 +297,15 @@ class Test_Database_Operations_Permission_And_Entry_List(unittest.TestCase):
             self.assertFalse(op.set_permission(db, '2222', '2222'))
             self.assertFalse(op.set_permission(db, '2020001111', '2020002222'))
             self.assertFalse(op.set_permission(db, '2020002222', '2222'))
-            self.assertEqual(op.get_permission_table().count(), 0)
+            self.assertEqual(len(op.get_permission_table()), 0)
 
     def test_set_and_revoke_permission(self):
         with self.app.app_context():
             self.assertTrue(op.set_permission(db, '2222', '2020002222'))
-            self.assertEqual(op.get_permission_table().count(), 1)
+            self.assertEqual(len(op.get_permission_table()), 1)
             self.assertTrue(op.revoke_permission(db, '2222', '2020002222'))
             self.assertFalse(op.check_permission(db, '2222', '2020002222'))
-            self.assertEqual(op.get_permission_table().count(), 0)
+            self.assertEqual(len(op.get_permission_table()), 0)
 
     def test_get_permission_table(self):
         with self.app.app_context():
@@ -315,12 +313,12 @@ class Test_Database_Operations_Permission_And_Entry_List(unittest.TestCase):
             self.assertTrue(op.set_permission(db, '1111', '2020002222'))
             self.assertFalse(op.set_permission(db, '9999', '2020002222'))
             self.assertFalse(op.set_permission(db, '1111', '2020002222'))
-            self.assertEqual(op.get_permission_table().count(), 2)
+            self.assertEqual(len(op.get_permission_table()), 2)
 
     def test_validate_entries_in_entry_table(self):
         with self.app.app_context():
-            self.assertFalse(insert_entry_list(db, '2345', '2020002222', True))
-            self.assertEqual(get_permission_table().count(), 0)
+            self.assertFalse(op.insert_entry_list(db, '2345', '2020002222', True))
+            self.assertEqual(len(op.get_permission_table()), 0)
 
     def test_validate_room_in_permissions_table(self):
         with self.app.app_context():
@@ -328,50 +326,50 @@ class Test_Database_Operations_Permission_And_Entry_List(unittest.TestCase):
             self.assertFalse(op.set_permission(db, '2020001111', '2020002222'))
             self.assertFalse(op.set_permission(db, 'sdfgdfsdfg', '2020002222'))
             self.assertFalse(op.set_permission(db, '7777', '2020001111'))
-            self.assertEqual(op.get_permission_table().count(), 1)
+            self.assertEqual(len(op.get_permission_table()), 1)
             
     def test_validate_author_in_permissions_table(self):
         with self.app.app_context():
-            self.assertTrue(op.set_permission(db, '1111', '2020002222', False))
-            self.assertFalse(op.set_permission(db, '9999', '2020002222', False))
+            self.assertTrue(op.set_permission(db, '1111', '2020002222'))
+            self.assertFalse(op.set_permission(db, '9999', '2020002222'))
             self.assertFalse(op.set_permission(db, '1111', 'asdfasdf'))
-            self.assertEqual(op.get_permission_table().count(), 1)
+            self.assertEqual(len(op.get_permission_table()), 1)
     
     def test_get_all_permission_table_users(self):
         with self.app.app_context():
-            self.assertTrue(op.set_permission(db, '2222', '2020002222', True))
-            self.assertTrue(op.set_permission(db, '1111', '2020002222', False))
-            self.assertTrue(op.set_permission(db, '1111', '2020001111', True))
-            self.assertEqual(op.get_permission_table().count(), 3)
+            self.assertTrue(op.set_permission(db, '2222', '2020002222'))
+            self.assertTrue(op.set_permission(db, '1111', '2020002222'))
+            self.assertTrue(op.set_permission(db, '1111', '2020001111'))
+            self.assertEqual(len(op.get_permission_table()), 3)
 
     def test_insert_entry_list(self):
         with self.app.app_context():
             self.assertTrue(op.insert_entry_list(db, '2222', '2020001111', True))
             self.assertFalse(op.insert_entry_list(db, '2020001111', '2344', False))
             self.assertFalse(op.insert_entry_list(db, '1111', '2020009999', True))
-            self.assertEqual(op.get_entry_table().count(), 1)
+            self.assertEqual(len(op.get_entry_table()), 1)
     
     def test_check_granted_entry_list(self):
         with self.app.app_context():
             self.assertTrue(op.insert_entry_list(db, '2222', '2020001111', True))
-            self.assertTrue(op.get_entry_table().first().granted)
+            self.assertTrue(op.get_entry_table()[0].granted)
             
     def test_check_denied_entry_list(self):
         with self.app.app_context():
             self.assertTrue(op.insert_entry_list(db, '2222', '2020001111', False))
-            self.assertFalse(op.get_entry_table().first().granted)
+            self.assertFalse(op.get_entry_table()[0].granted)
     
     def test_get_entry_table(self):
         with self.app.app_context():
             self.assertTrue(op.insert_entry_list(db, '2222', '2020002222', True))
             self.assertTrue(op.insert_entry_list(db, '1111', '2020002222', False))
             self.assertTrue(op.insert_entry_list(db, '1111', '2020001111', True))
-            self.assertEqual(op.get_entry_table().count(), 3)
+            self.assertEqual(len(op.get_entry_table()), 3)
     
     def test_clear_entry_list(self):
         with self.app.app_context():
             self.assertTrue(op.clear_entry_list())
-            self.assertEqual(op.get_entry_table().count(), 0)
+            self.assertEqual(len(op.get_entry_table()), 0)
 
 
 if __name__ == '__main__':

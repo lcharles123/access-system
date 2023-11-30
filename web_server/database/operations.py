@@ -83,13 +83,16 @@ def is_valid_user(username, role):
     Expect a exception from this function if roles mismatch
 '''
 def set_permission(db, room, user):
-    p = Permissions.query.filter_by(room=room, user=user).first()
-    if p is None:
-        p = Permissions(room=room, user=user)
-        db.session.add(p)
-        db.session.commit()
-        return True
-    else:
+    try:
+        p = Permissions.query.filter_by(room=room, user=user).first()
+        if p is None:
+            p = Permissions(room=room, user=user)
+            db.session.add(p)
+            db.session.commit()
+            return True
+        else:
+            return False
+    except:
         return False
 
 def revoke_permission(db, room, user):
@@ -132,7 +135,7 @@ def get_entry_table():
 
 ''' For deleting all entries, only system admin can do it
 '''
-def clear_entry_list(db, do_backup_path=''):
+def clear_entry_list(do_backup_path=''):
     Entry_List.query.delete()
-    return Entry_List.query.all().count() == 0
+    return len(Entry_List.query.all()) == 0
 
