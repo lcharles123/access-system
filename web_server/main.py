@@ -1,15 +1,14 @@
 import sqlite3
 import ldap
 from flask import Blueprint, current_app, render_template, request, url_for, flash, redirect
-from server.database import db, db_init
-from server.database import operations as db_oper
+from .database import db, db_init
+from .database import operations as db_oper
 from flask_login import login_required, current_user
 from flask_restful import Resource, Api  
+from .database.scheduled_operations import add_sched_entries, start_sched
+
 from os import path
 
-
-#FIXME remove after factoration
-BASE_DIR = path.dirname(path.abspath(__file__))
 main = Blueprint('main', __name__)
 
 
@@ -18,9 +17,10 @@ main = Blueprint('main', __name__)
 '''
 # TODO can filter table by room, user, succeeded, date range
 
-@main.before_app_first_request
+# FIXME sent to doing tests
+'''@main.before_app_first_request
 def create_tables():
-    if not path.exists(current_app.config['SQLALCHEMY_DATABASE_URI']):
+    if not path.exists(current_app.config['SQLALCHEMY_DATABASE_URI']) or True:
         db.app = main
         db.drop_all()
         db.create_all()
@@ -29,20 +29,33 @@ def create_tables():
         db_init.create_tree_locks()
         db_init.create_tree_lock_users()
         db_init.set_tree_permissions()
-        db_init.create_tree_access()
+        db_init.create_tree_access()'''
 
+''' Cleanup Enty_List after 6 months
+    Clean permissions with expiration date, runs every day
+'''
+@main.before_app_first_request
+def scheduler_jobs():
+    sched = add_sched_entries()
+    start_sched(sched)
+    
 ''' List last access to locks.
 '''
-@main.route('/')
+@main.route('/', methods=('GET', 'POST'))
 #@login_required
 def index():
-    rows = db_oper.get_entry_table()
+    #if request.method == 'POST':
+    # TODO exhibt a table entry filter
+    # row like object
+    entry_table = db_oper.get_entry_table()
+    #print(current_user.get_username)
     #print(rows[0].as_row)
-    return render_template('index.html', current_user=current_user, rows=rows) 
+    return render_template('index.html', current_user=current_user, entry_table=entry_table) 
     
 
 '''List all users, given a room number from a specific ldap server
 '''
+#TODO do a anon bind, receive credentials and return if bool if valid user
 def list_users(room_number, url='ldap://serv.hopto.org', admin='cn=admin,dc=ufmg,dc=br', pwd='yweruyoityutrwgfjdytuasdfrtasf'):
     ldap_srv = ldap.initialize(url)
     ldap_srv.protocol_version = ldap.VERSION3
@@ -68,7 +81,6 @@ def list_users(room_number, url='ldap://serv.hopto.org', admin='cn=admin,dc=ufmg
     indicating success or error with its 'error type'
     'error type' can be one of {WrongUser, WrongRoom, AlreadyAdded, Unknown}
 '''
-#TODO adicionar data de término automático da permissão
 @main.route('/users', methods=('GET', 'POST'))
 #@login_required
 def users():
@@ -130,7 +142,7 @@ def rooms():
             msg = 'Sala número "'+room+'" adicionada ao sistema.'
             flash(msg, 'alert_ok')
     
-    rooms = db_oper.get_all_table_users(db, 'lock')
+    rooms = db_oper.get_all_table_users('lock')
     return render_template('rooms.html', rooms=rooms)
 
 def add_room(room, name):
