@@ -10,8 +10,6 @@
         <label for="room">Filtrar por:</label>
         <select name="room" id="room">
         <option value="all">Todas</option>
-        
-        {# construir a lista de salas aqui #}
         {% for entry in all_entry_table %}
             <option value="{{ entry.room }}">{{ entry.room }} - {{ entry.room_name }}</option>
         {% endfor %}

@@ -55,8 +55,29 @@
             color: #978600;
             background-color: #FFF6AE;
         }
-        table, th, td {
-          border:1px solid black;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #f2f2f2; /* Light gray background for the entire table */
+        }
+
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: center;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #666; /* Dark gray background for header cells */
+            color: #fff; /* White text color for header cells */
+        }
+
+        td:nth-child(even) {
+            background-color: #f9f9f9; /* Slightly lighter gray background for even rows */
+        }
+
+        td:nth-child(odd) {
+            background-color: #e6e6e6; /* Slightly darker gray background for odd rows */
         }
 }
     </style> 

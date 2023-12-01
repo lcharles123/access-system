@@ -81,12 +81,28 @@ class User(db.Model, UserMixin):
 class Permissions(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     __tablename__ = 'permissions'
+    room_name = db.Column(db.String(64), nullable=False)
+    @validates('room_name')
+    def validate_room(self, key, value):
+        user = User.query.filter_by(username=value, role='lock').first()
+        if user == None:
+            raise ValueError('Inexistent room with room.role == lock')
+        else:
+            return value
     room = db.Column(db.String(255), db.ForeignKey('user.username'), nullable=False)
     @validates('room')
     def validate_room(self, key, value):
         user = User.query.filter_by(username=value, role='lock').first()
         if user == None:
             raise ValueError('Inexistent room with room.role == lock')
+        else:
+            return value
+    user_name = db.Column(db.String(64), nullable=False)
+    @validates('user_name')
+    def validate_user(self, key, value):
+        user = User.query.filter_by(username=value, role='lock_user').first()
+        if user == None:
+            raise ValueError('Inexistent author with author.role == lock_user')
         else:
             return value
     user = db.Column(db.String(255), db.ForeignKey('user.username'), nullable=False)
