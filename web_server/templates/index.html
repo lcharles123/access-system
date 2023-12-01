@@ -9,11 +9,11 @@
     <form action="/" method="POST">
         <label for="room">Filtrar por:</label>
         <select name="room" id="room">
-        <option value="">Todas</option>
+        <option value="all">Todas</option>
         
         {# construir a lista de salas aqui #}
-        {% for room in entry_table['room'] %}
-            <option value="{{ room }}">{{ room }}</option>
+        {% for entry in all_entry_table %}
+            <option value="{{ entry.room }}">{{ entry.room }} - {{ entry.room_name }}</option>
         {% endfor %}
         </select>
         <button type="submit">Filtrar</button>
@@ -27,12 +27,17 @@
         <th>Data</th>
         <th>Concedido</th>
     </tr>
-    {% for row in entry_table %}
+    {% for row in filtered_entry_table %}
     <tr>
-        <td>{{ row['room'] }}</td>
-        <td>{{ row['author'] }}</td>
+        <td>{{ row['room'] }} - {{ row['room_name'] }}</td>
+        <td>{{ row['author'] }} - {{ row['author_name'] }}</td>
         <td>{{ row['date'] }}</td>
-        <td>{{ row['success'] }}</td>
+        {% if row['granted'] %}
+            <td>Sim</td>
+        {% else %}
+            <td>Não</td>
+        {% endif %}
+        
     </tr>
     {% endfor %}
 </table> 

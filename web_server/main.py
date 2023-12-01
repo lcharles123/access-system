@@ -1,6 +1,6 @@
 import sqlite3
 import ldap
-from flask import Blueprint, current_app, render_template, request, url_for, flash, redirect
+from flask import Blueprint, current_app, render_template, request, url_for, flash, redirect, abort
 from .database import db, db_init
 from .database import operations as db_oper
 from flask_login import login_required, current_user
@@ -18,7 +18,7 @@ main = Blueprint('main', __name__)
 # TODO can filter table by room, user, succeeded, date range
 
 # FIXME sent to doing tests
-'''@main.before_app_first_request
+@main.before_app_first_request
 def create_tables():
     if not path.exists(current_app.config['SQLALCHEMY_DATABASE_URI']) or True:
         db.app = main
@@ -28,8 +28,9 @@ def create_tables():
         db_init.create_tree_users()
         db_init.create_tree_locks()
         db_init.create_tree_lock_users()
+        
         db_init.set_tree_permissions()
-        db_init.create_tree_access()'''
+        db_init.create_tree_access()
 
 ''' Cleanup Enty_List after 6 months
     Clean permissions with expiration date, runs every day
@@ -44,13 +45,35 @@ def scheduler_jobs():
 @main.route('/', methods=('GET', 'POST'))
 #@login_required
 def index():
-    #if request.method == 'POST':
-    # TODO exhibt a table entry filter
-    # row like object
-    entry_table = db_oper.get_entry_table()
+    room = 'all'
+    all_entry_table = db_oper.get_entry_table()
+    filtered_entry_table = None
+    if request.method == 'POST': # filter by room
+        try:
+            room = request.form['room']
+        except:
+            return abort(400)
+    print('room', room)
+    if room == 'all':
+        filtered_entry_table = db_oper.get_entry_table()
+    else:
+        filtered_entry_table = db_oper.get_entry_table(on='room', element=room)
+    
+    #entry_table = db_oper.get_entry_table(on='room')
+    perm = db_oper.get_permission_table()
+    users = db_oper.get_all_table_users('user')
+    admin = db_oper.get_all_table_users('admin')
+    lock_users = db_oper.get_all_table_users('lock_user')
+    locks = db_oper.get_all_table_users('lock')
+    #print(len(entry_table), len(perm), len(users))
+    #print(len(admin), len(lock_users), len(locks))
     #print(current_user.get_username)
-    #print(rows[0].as_row)
-    return render_template('index.html', current_user=current_user, entry_table=entry_table) 
+    #print(entry_table[0].as_row)
+    #for entry in entry_table:
+    #    print(entry['room'])
+    return render_template('index.html', current_user=current_user, 
+                                        all_entry_table=all_entry_table,
+                                        filtered_entry_table=filtered_entry_table) 
     
 
 '''List all users, given a room number from a specific ldap server
@@ -150,8 +173,6 @@ def add_room(room, name):
         room = request.form['room'] # username
         #password = request.form['password']
         name = request.form['name']
-        
-        
     except:
         if not name or not room:
             if not room:

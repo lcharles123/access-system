@@ -64,20 +64,19 @@
 <body>
 <nav class="header">
 	<ul>
-      <a href="{{ url_for('main.index') }}">Listar Acessos</a> 
+	  {#% if current_user.is_authenticated %#}
+	  <a href="{{ url_for('main.index') }}">Listar Acessos</a> 
       <a href="{{ url_for('main.users') }}">Conceder Permissões</a>
+      {#% if current_user.get_username == '0' %#}
       <a href="{{ url_for('main.rooms') }}">Cadastrar Salas</a>
-      {#% if current_user.get_username == '0' %}
-        <a href="{{ url_for('main.rooms') }}">Cadastrar Salas</a>
-      {% endif %#}
-      {% if current_user.is_authenticated %}
-        <a href="{{ url_for('auth.logout') }}">Sair</a>       
-      {% else %}
-        <a href="{{ url_for('auth.login') }}">Entrar</a> 
-      {% endif %}
-      
+      {#% endif %#}
+      <a href="{{ url_for('auth.logout') }}">Sair</a>   
       <a href="{{ url_for('main.help') }}">Ajuda</a> 
+	  {#% else %#}
+	  <a href="{{ url_for('auth.login') }}">Entrar</a>     
+      {#% endif %#}
       <a href="/api">API</a> 
+      
 </ul>
      </nav>
 

@@ -114,13 +114,17 @@ def get_permission_table():
 ''' Operations perfomed on Entry_List
     This table is insert_only and clear old than x days from now
 '''
-def insert_entry_list(db, room, username, granted):
-    # checks(room, username) roles are made in model definition
-    entry = Entry_List.query.filter_by(room=room, author=username).first()
+def insert_entry_list(db, room, author, granted):
+    lock_user = User.query.filter_by(username=author, role='lock_user').first()
+    lock = User.query.filter_by(username=room, role='lock').first()
+    
+    entry = Entry_List.query.filter_by(room=room, author=author).first()
     if entry is None:
         try:
             entry = Entry_List( room=room,
-                                author=username,
+                                room_name=lock.name,
+                                author=author,
+                                author_name=lock_user.name,
                                 granted=granted)
         except: 
             return False
@@ -130,8 +134,20 @@ def insert_entry_list(db, room, username, granted):
     else:
         return False
 
-def get_entry_table():
-    return Entry_List.query.all()
+''' Get entry table by default
+    @param on can be 'room' or 'user'
+    it is used to filter the entries by room or user
+'''
+def get_entry_table(on=None, element=None):
+    result = []
+    if on == 'author':
+        result = Entry_List.query.filter_by(author=element).all()
+    elif on == 'room':
+        result = Entry_List.query.filter_by(room=element).all()
+    else:
+        result = Entry_List.query.all()
+    return result
+
 
 ''' For deleting all entries, only system admin can do it
 '''

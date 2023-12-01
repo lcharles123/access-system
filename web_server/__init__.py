@@ -13,18 +13,14 @@ from . import app_config
 def create_app(config_type=app_config.Development):
     app = Flask(__name__)
     app.config.from_object(config_type())
-    
     generate_api_routes(app) # from api.routes
-    
-    
-    
     db.init_app(app)
     db.app = app
     with app.app_context():
         # FIXME remove after having tests
         db.drop_all()
-        
         db.create_all()  
+        
         u = User.query.filter_by(username='0').first()
         if u == None:
             from bcrypt import hashpw, gensalt
@@ -50,7 +46,7 @@ def create_app(config_type=app_config.Development):
             print("Admin was set now.")
         else:
             print("Admin already set, doing nothing.")
-    print(User.query.all()[0].__dict__)
+    #print(User.query.all()[0].__dict__)
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
     login_manager.init_app(app)

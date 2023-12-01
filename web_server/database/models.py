@@ -114,7 +114,15 @@ class Entry_List(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     __tablename__ = 'entry_list'
     
-    room = db.Column(db.String(64), nullable=False) #FIXME ensures exists on User table
+    room_name = db.Column(db.String(64), nullable=False)
+    @validates('room_name')
+    def validate_room(self, key, value):
+        user = User.query.filter_by(username=value, role='lock').first()
+        if user == None:
+            raise ValueError('Inexistent room with room.role == lock')
+        else:
+            return value
+    room = db.Column(db.String(64), nullable=False)
     @validates('room')
     def validate_room(self, key, value):
         user = User.query.filter_by(username=value, role='lock').first()
@@ -122,7 +130,15 @@ class Entry_List(db.Model):
             raise ValueError('Inexistent room with room.role == lock')
         else:
             return value
-    author = db.Column(db.String(64), nullable=False) #FIXME ensures exists on User table
+    author_name = db.Column(db.String(64), nullable=False)
+    @validates('author_name')
+    def validate_user(self, key, value):
+        user = User.query.filter_by(username=value, role='lock_user').first()
+        if user == None:
+            raise ValueError('Inexistent author with author.role == lock_user')
+        else:
+            return value
+    author = db.Column(db.String(64), nullable=False)
     @validates('author')
     def validate_user(self, key, value):
         user = User.query.filter_by(username=value, role='lock_user').first()
