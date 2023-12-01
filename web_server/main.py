@@ -53,7 +53,6 @@ def index():
             room = request.form['room']
         except:
             return abort(400)
-    print('room', room)
     if room == 'all':
         filtered_entry_table = db_oper.get_entry_table()
     else:
@@ -183,14 +182,15 @@ def try_grant_permission(user, room):
 #@login_required
 def rooms():
     if request.method == 'POST':
-        room = None
-        name = None
-        password = None
+        # try if managing rooms
         room_to_del = None
         try:
             room_to_del = request.form['room_to_delete']
         except:
             pass
+        room = None
+        name = None
+        password = None
         try:
             room = request.form['room'] # username is the room number
             #TODO password = request.form['password']
@@ -199,6 +199,22 @@ def rooms():
             name = request.form['name']
         except:
             pass
+        # try if are managing admistrators
+        username_to_add = None
+        name_to_add = None
+        password_to_add = None
+        try:
+            username_to_add = request.form['username_to_add']
+            name_to_add = request.form['name_to_add']
+            password_to_add = request.form['password_to_add']
+        except:
+            pass
+        sadmin_to_delete = None
+        try:
+            sadmin_to_delete = request.form['sadmin_to_delete']
+        except:
+            pass
+        # do the work depending on was data where submited
         if room is not None or name is not None:
             if not room:
                 flash('Por favor, forneça um Número de sala válido.', 'alert_fail')
@@ -214,13 +230,46 @@ def rooms():
                 flash('Sala "'+room_to_del+'" removida com sucesso.', 'alert_ok')
             else:
                 flash('Erro ao remover: sala não cadastrada.', 'alert_fail')
+        elif username_to_add is not None or \
+                 name_to_add is not None or \
+             password_to_add is not None:
+             if username_to_add is '' or \
+                    name_to_add is '' or \
+                password_to_add is '':
+                flash('Erro ao adicionar sub administradores, por favor preencha Nome de usuário, Nome e Senha.', 'alert_fail')
+             else:
+                userattr={'username': username_to_add, 
+                   'email': username_to_add+'@example.com', 
+                   'name': name_to_add,
+                   'password': password_to_add }
+                added = False
+                try:
+                    added = db_oper.insert_user(db, 'user', userattr)
+                except:
+                    pass
+                if added:
+                    msg = 'Usuário "'+name_to_add+'" adicionado".'
+                    flash(msg, 'alert_ok')
+                else:
+                    msg = 'Erro ao adicionar usuário "'+name_to_add+'".'
+                    flash(msg, 'alert_fail')
+        elif sadmin_to_delete is not None:
+            if db_oper.remove_user(db, sadmin_to_delete):
+                msg = 'Usuário cujo identificador é "'+sadmin_to_delete+'" foi removido".'
+                flash(msg, 'alert_ok')
+            else:
+                msg = 'Erro ao remover usuário cujo identificador é "'+sadmin_to_delete+'".'
+                flash(msg, 'alert_fail')
+        else:
+            flash('Requisição incompleta.', 'alert_fail')
     
     rooms = db_oper.get_all_table_users('lock')
-    return render_template('rooms.html', rooms=rooms)
+    admins = db_oper.get_all_table_users('user')
+    return render_template('rooms.html', rooms=rooms, admins=admins)
 
 def add_room(room, name):
-    if db_oper.insert_user(db, 'lock', 
-                           atributes={'username': room, 
+    if db_oper.insert_user(db, 'lock', atributes={
+                           'username': room, 
                            'password': '123', 
                            'name': name, 
                            'role': 'lock'}):

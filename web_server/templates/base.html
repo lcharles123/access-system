@@ -29,7 +29,7 @@
             margin-left: 20px;
             text-decoration: none;
             color: #000000;
-            background-color: #f0ffff;
+            background-color: #f0fff0;
             
         }
         a:hover {
@@ -58,7 +58,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            background-color: #f2f2f2; /* Light gray background for the entire table */
+            background-color: #f2f2f2; 
         }
 
         th, td {
@@ -68,16 +68,16 @@
         }
 
         th {
-            background-color: #666; /* Dark gray background for header cells */
-            color: #fff; /* White text color for header cells */
+            background-color: #666; 
+            color: #fff; 
         }
 
         td:nth-child(even) {
-            background-color: #f9f9f9; /* Slightly lighter gray background for even rows */
+            background-color: #f9f9f9; 
         }
 
         td:nth-child(odd) {
-            background-color: #e6e6e6; /* Slightly darker gray background for odd rows */
+            background-color: #e6e6e6; 
         }
 }
     </style> 
@@ -86,10 +86,10 @@
 <nav class="header">
 	<ul>
 	  {#% if current_user.is_authenticated %#}
-	  <a href="{{ url_for('main.index') }}">Listar Acessos</a> 
-      <a href="{{ url_for('main.users') }}">Conceder Permissões</a>
+	  <a href="{{ url_for('main.index') }}">Listar acessos</a> 
+      <a href="{{ url_for('main.users') }}">Gerenciar permissões</a>
       {#% if current_user.get_username == '0' %#}
-      <a href="{{ url_for('main.rooms') }}">Cadastrar Salas</a>
+      <a href="{{ url_for('main.rooms') }}">Gerenciar usuários</a>
       {#% endif %#}
       <a href="{{ url_for('auth.logout') }}">Sair</a>   
       <a href="{{ url_for('main.help') }}">Ajuda</a> 
