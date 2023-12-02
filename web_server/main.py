@@ -250,6 +250,8 @@ def rooms():
                 if added:
                     msg = 'Usuário "'+name_to_add+'" adicionado".'
                     flash(msg, 'alert_ok')
+                    msg = 'Anote esta senha, pois só pode ser visualizada aqui: "'+password_to_add+'".'
+                    flash(msg, 'alert_warn')
                 else:
                     msg = 'Erro ao adicionar usuário "'+name_to_add+'".'
                     flash(msg, 'alert_fail')
