@@ -235,13 +235,13 @@ class Test_Database_Operations_User(unittest.TestCase):
 
     def test_not_nullable_entry_list_author(self):
         with self.app.app_context():
-            null_author = Entry_List(room='1111', author=None)
+            null_author = Entry_List(room='1111', room_name='room1', author=None, author_name='user1')
             with self.assertRaises(Exception):
                 self.aux_add_commit(null_author)
     
     def test_not_nullable_entry_list_room(self):
         with self.app.app_context():
-            null_room = Entry_List(room=None, author='1111223333')
+            null_room = Entry_List(room=None,room_name='room1', author='1111223333', author_name='user1')
             with self.assertRaises(Exception):
                 self.aux_add_commit(null_room)
     
@@ -365,6 +365,13 @@ class Test_Database_Operations_Permission_And_Entry_List(unittest.TestCase):
             self.assertTrue(op.insert_entry_list(db, '1111', '2020002222', False))
             self.assertTrue(op.insert_entry_list(db, '1111', '2020001111', True))
             self.assertEqual(len(op.get_entry_table()), 3)
+
+    def test_get_entry_table(self):
+        with self.app.app_context():
+            self.assertTrue(op.insert_entry_list(db, '2222', '2020002222', True))
+            self.assertEqual(op.get_entry_table(on='room', element='3333'), [])
+            self.assertNotEqual(op.get_entry_table(on='author', element='2020002222'), [])
+            self.assertNotEqual(op.get_entry_table(on='room', element='2222'), [])
     
     def test_clear_entry_list(self):
         with self.app.app_context():

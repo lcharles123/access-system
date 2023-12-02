@@ -3,7 +3,59 @@
 {% block title_content %}     
     <title>Ajuda - Fechadura Eletrônica</title>
 {% endblock %}
-{% block body_content %}
-<h5 class="title">
-  Esta é a página de ajuda para uso do sistema! </h5> 
+{% block body_content %} 
+  <h1>Ajuda</h1>
+  <p>Esta é a página de ajuda deste sistema de controle de acesso. Este sistema é usado para gerenciar permissões de acesso às fechaduras eletrônicas a usuários cadastrados em um diretório de usuários.</p>
+    <p>Para poder acessar este sistema, o usuário deve entrar com o seu identificador e sua senha na página de login. Estas credênciais devem ser previamente cadastradas pelo Super Administrador, que é o único que pode fazer a operação de adicionar ou remover salas ou outros administradores. Estes administradores possuem menos permissões, se limitando-se apenas a garantir ou revogar permissões aos usuários das fechaduras, além de listar as tentativas de acesso.</p>
+    <p>O sistema é composto pelas seguintes páginas:</p>
+
+    <h2>1. Listar acessos</h2>
+    <p>Nesta página é possível vizualizar todas as tentativas de acesso a uma fechadura, com informações que incluem Sala, nome do usuário, data, e se o acesso foi concedido ou não. É possível também filtrar os acessos por sala.</p>
+
+    <h2>2. Gerenciar permissões</h2>
+    <p>Nesta página é possível gerenciar as permissões de acesso. Qualquer um dos administradores pode adicionar ou remover matrículas associadas à uma determinada sala, desde que esta esteja devidamente cadastrada na página de gerência de usuários.</p>
+    
+    <h2>3. Gerenciar usuários</h2>
+    <p>Esta página está disponível apenas para o super administrador do sistema.</p>
+
+    <h3>3.1 Gerenciar salas</h3>
+    <p>Aqui é possível adicionar ou remover as salas, associando-as a um número e um nome, este número deve ser único e garante a identificação de uma sala sem ambiguidade. Ele deve posteriormente ser configurado junto à fechadura que fará as requisições para o sistema.</p>
+
+    <h3>3.2 Gerenciar sub administradores</h3>
+    <p>Sub administradores são administradores com menos permissões que o Super administrador. Eles podem adicionar ou remover permissões, mas não podem adicionar ou remover salas e outros sub administradores.</p>
+    <p>Para adicionar um sub administrador, deve ser fonecido um ID númérico que não foi atribuído a outro usuário, deve ser fornecido também um nome e uma senha, a ser usada para acesso ao sistema por este administrador.</p>
+    <p>A senha aparecerá uma única vez na mensagem exibida após a inserção de um sub administrador. Ela deve ser anotada pois não é possível recuperá-la. Em caso de perda, o super administrador pode excluir o seu usuário e criá-lo novamente com outra senha.</p>
+    
+    <h2>4. API</h2>
+    <p>A API REST é disponibilizada pelo servidor, ela deve ser usada para enviar dados das fechaduras. Os dados a serem enviados para a API são o nome de usuário e a senha para que o servidor verifique se existe a permissão de um usuário para ativar determinada sala.</p>
+    <p>A segurança da comunicação é inteiramente garantida pelo certificado TLS, pois seu uso é exigido. Desta forma não é possível forjar um servidor para enganar todos os clientes.</p>
+
+    <h3>Caminho da API</h3>
+    <p>Endpoint: <code>/api</code></p>
+
+    <h3>Método HTTP</h3>
+    <p>Method: <code>POST</code></p>
+
+    <h3>Formatação da requisição</h3>
+    <p>Enviar uma requisição POST HTTP no caminho <code>/api/data</code> com os dados de usuário e fechadura.</p>
+
+    <h3>Exemplo</h3>
+    <pre>
+        <code>
+POST /api HTTP/1.1
+Content-Type: application/json
+
+{
+    "user": "2020991122",
+    "room": "1111"
+}
+        </code>
+    </pre>
+
+    <h3>Resposta</h3>
+    <p>A resposta à requisição são dois campos indicando se o usuário pode ativar a fechadura e o segundo campo indica, no caso da não ativação da fechadura, qual é o motivo, cujas possibilidades são: usuário não é válido no LDAP, usuário é válido no LDAP mas não tem permissão.</p>
+
+
 {% endblock %}
+
+

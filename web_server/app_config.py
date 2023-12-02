@@ -16,7 +16,6 @@ class Basic_Config:
     ADMIN_PASSWD = '123'
     FLASK_RUN_RELOADER = False
 
-
 class Development(Basic_Config):
     ENV = "development"
     SQLALCHEMY_DATABASE_URI = "sqlite:////tmp/foo.db"
@@ -24,7 +23,6 @@ class Development(Basic_Config):
     SQLALCHEMY_TRACK_MODIFICATIONS = True
     TEMPLATES_AUTO_RELOAD = True
     MAX_CONTENT_LENGTH = None
-    SERVER_NAME = "localhost:5000"
     SESSION_COOKIE_SECURE = False
 
 class Testing(Development):
@@ -40,7 +38,6 @@ class Production(Basic_Config):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     TEMPLATES_AUTO_RELOAD = False
     MAX_CONTENT_LENGTH = None #FIXME put a aproximate value here, bytes
-    SERVER_NAME = "localhost:6000"
     # ensure https
     SESSION_COOKIE_SECURE = True
     ADMIN_EMAIL = 'admin@example.com' 

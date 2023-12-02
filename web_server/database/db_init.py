@@ -51,15 +51,15 @@ def create_tree_lock_users():
 
 def set_tree_permissions(): 
     rs = []
-    '''for user,room in [("2020001234","1111"),("2020001234","2222"),("2020001235","2222")]:
+    for user,room in [("2020001234","1111"),("2020001234","2222"),("2020001235","2222")]:
         rs.append(set_permission(db, room, user))
-    logging.info(str(rs))'''
+    logging.info(str(rs))
 
 def create_tree_access():
     rs = []
-    '''for user,room in [("2020001234","1111"),("2020001234","2222"),("2020001236","3333")]:
+    for user,room in [("2020001234","1111"),("2020001234","2222"),("2020001236","3333")]:
         success = check_permission(db, room, user)
         rs.append(insert_entry_list(db, room, user, success))
-    logging.info(str(rs))'''
+    logging.info(str(rs))
 
 

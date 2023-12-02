@@ -29,7 +29,7 @@
             margin-left: 20px;
             text-decoration: none;
             color: #000000;
-            background-color: #f0ffff;
+            background-color: #f0fff0;
             
         }
         a:hover {
@@ -55,8 +55,29 @@
             color: #978600;
             background-color: #FFF6AE;
         }
-        table, th, td {
-          border:1px solid black;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #f2f2f2; 
+        }
+
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: center;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #666; 
+            color: #fff; 
+        }
+
+        td:nth-child(even) {
+            background-color: #f9f9f9; 
+        }
+
+        td:nth-child(odd) {
+            background-color: #e6e6e6; 
         }
 }
     </style> 
@@ -64,20 +85,19 @@
 <body>
 <nav class="header">
 	<ul>
-      <a href="{{ url_for('main.index') }}">Listar Acessos</a> 
-      <a href="{{ url_for('main.users') }}">Conceder Permissões</a>
-      <a href="{{ url_for('main.rooms') }}">Cadastrar Salas</a>
-      {#% if current_user.get_username == '0' %}
-        <a href="{{ url_for('main.rooms') }}">Cadastrar Salas</a>
-      {% endif %#}
-      {% if current_user.is_authenticated %}
-        <a href="{{ url_for('auth.logout') }}">Sair</a>       
-      {% else %}
-        <a href="{{ url_for('auth.login') }}">Entrar</a> 
-      {% endif %}
-      
-      <a href="{{ url_for('main.help') }}">Ajuda</a> 
+	  {#% if current_user.is_authenticated %#}
+	  <a href="{{ url_for('main.index') }}">Listar acessos</a> 
+      <a href="{{ url_for('main.users') }}">Gerenciar permissões</a>
+      {#% if current_user.get_username == '0' %#}
+        <a href="{{ url_for('main.rooms') }}">Gerenciar usuários</a>
+      {#% endif %#}
+      <a href="{{ url_for('auth.logout') }}">Sair</a>   
+	  {#% else %#}
+	  <a href="{{ url_for('auth.login') }}">Entrar</a>     
+      {#% endif %#}
+      <a href="{{ url_for('main.help') }}">Ajuda</a>
       <a href="/api">API</a> 
+      
 </ul>
      </nav>
 

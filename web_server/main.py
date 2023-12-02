@@ -1,6 +1,6 @@
 import sqlite3
 import ldap
-from flask import Blueprint, current_app, render_template, request, url_for, flash, redirect
+from flask import Blueprint, current_app, render_template, request, url_for, flash, redirect, abort
 from .database import db, db_init
 from .database import operations as db_oper
 from flask_login import login_required, current_user
@@ -18,7 +18,7 @@ main = Blueprint('main', __name__)
 # TODO can filter table by room, user, succeeded, date range
 
 # FIXME sent to doing tests
-'''@main.before_app_first_request
+@main.before_app_first_request
 def create_tables():
     if not path.exists(current_app.config['SQLALCHEMY_DATABASE_URI']) or True:
         db.app = main
@@ -28,8 +28,9 @@ def create_tables():
         db_init.create_tree_users()
         db_init.create_tree_locks()
         db_init.create_tree_lock_users()
+        
         db_init.set_tree_permissions()
-        db_init.create_tree_access()'''
+        db_init.create_tree_access()
 
 ''' Cleanup Enty_List after 6 months
     Clean permissions with expiration date, runs every day
@@ -44,128 +45,197 @@ def scheduler_jobs():
 @main.route('/', methods=('GET', 'POST'))
 #@login_required
 def index():
-    #if request.method == 'POST':
-    # TODO exhibt a table entry filter
-    # row like object
-    entry_table = db_oper.get_entry_table()
-    #print(current_user.get_username)
-    #print(rows[0].as_row)
-    return render_template('index.html', current_user=current_user, entry_table=entry_table) 
-    
+    room = 'all'
+    all_entry_table = db_oper.get_entry_table()
+    filtered_entry_table = None
+    if request.method == 'POST': # filter by room
+        try:
+            room = request.form['room']
+        except:
+            return abort(400)
+    if room == 'all':
+        filtered_entry_table = db_oper.get_entry_table()
+    else:
+        filtered_entry_table = db_oper.get_entry_table(on='room', element=room)
+    return render_template('index.html', current_user=current_user, 
+                                        all_entry_table=all_entry_table,
+                                        filtered_entry_table=filtered_entry_table) 
 
-'''List all users, given a room number from a specific ldap server
-'''
-#TODO do a anon bind, receive credentials and return if bool if valid user
-def list_users(room_number, url='ldap://serv.hopto.org', admin='cn=admin,dc=ufmg,dc=br', pwd='yweruyoityutrwgfjdytuasdfrtasf'):
-    ldap_srv = ldap.initialize(url)
-    ldap_srv.protocol_version = ldap.VERSION3
-    ldap_srv.set_option(ldap.OPT_REFERRALS, 0)
-    ldap_srv.simple_bind_s(admin, pwd)
-    
-    base = "cn="+str(room_number)+",ou=rooms,dc=ufmg,dc=br"
-    criteria = "(objectClass=posixGroup)" # list all users
-    attributes = ['memberUid']
-    try:
-        users = l.search_s(base, ldap.SCOPE_SUBTREE, criteria, attributes)[0][1]['memberUid']
-    except:
-        users = [b'']
-    if users[0] == b'':
-        return b''   
-    users = [str(i).replace(',', '=').split('=')[1] for i in users]
-    ldap_srv.unbind()
-    return users
-
-''' A page used to add users
+''' A page used to add or delete user permissions
     It can be used a enrollment_id to add user to room_number
     After the request for adding, a message is displayed
-    indicating success or error with its 'error type'
-    'error type' can be one of {WrongUser, WrongRoom, AlreadyAdded, Unknown}
+    indicating success or error of the operation
 '''
 @main.route('/users', methods=('GET', 'POST'))
 #@login_required
 def users():
+    perm_list = db_oper.get_permission_table()
     if request.method == 'POST':
         user = None
         room = None
-        if grant_permission(user, room) == True:
-            msg = 'Usuário '+user+' adicionado à sala '+room+'.'
-            flash(msg, 'alert_ok')
-    permissions = db_oper.get_permission_table()
-    return render_template('users.html', permissions=permissions) 
+        filter_room = None
+        room_to_delete = None
+        user_to_delete = None
+        try:
+            filter_room = request.form['filter_room']
+        except:
+            pass
+        try:
+            room_to_delete = request.form['room_to_delete']
+            user_to_delete = request.form['user_to_delete']
+        except:
+            pass
+        try:
+            user = request.form['user']
+            room = request.form['room']
+            print(user, room)
+        except:   
+            pass
+        
+        if filter_room is not None:
+            if filter_room == 'all':
+                pass # perm_list aready have all table
+            else:
+                perm_list = db_oper.get_permission_table(room=filter_room)
+        elif room_to_delete is not None or user_to_delete is not None:
+            if db_oper.revoke_permission(db, room_to_delete, user_to_delete):
+                msg='Permissão do usuário "'+user_to_delete+'" à sala "'+room_to_delete+'" revogada.'
+                flash(msg, 'alert_ok')
+            else:
+                msg='Erro ao revogar permissão, por favor selecione um usuário e uma sala.'
+                flash(msg, 'alert_fail')
+            perm_list = db_oper.get_permission_table() # update permissions after deleting
+        elif room is not None or user is not None:
+            if try_grant_permission(user, room) == True:
+                msg = 'Usuário "'+user+'" adicionado à sala '+room+'.'
+                flash(msg, 'alert_ok')
+            perm_list = db_oper.get_permission_table() # update permissions after adding
+    # for add permissions dropdown menu
+    rooms = db_oper.get_all_table_users('lock')
+    return render_template('users.html', rooms=rooms, permissions=perm_list) 
 
-def grant_permission(user, room):
-    try:
-        user = request.form['user']
-        room = request.form['room']
-    except:   
-        if not user or not room:
-            if not room:
-                flash('Ientificador da sala em branco!', 'alert_fail')
-            if not user:
-                flash('Identificador de usuário em branco!', 'alert_fail')
-            return False
-    # Case doing POST of invalid data (inexistent lock)
-    if not db_oper.is_valid_user(db, room, 'lock'):
-        flash('Sala invália, por favor, **cadastre-a aqui**.', 'alert_fail')
+def try_grant_permission(user, room):
+    if not db_oper.is_valid_user(room, 'lock'):
+        flash('Sala invália, por favor, peça ao administrador do sistema para incluí-la.', 'alert_fail')
         return False
     #TODO validate user in LDAP here, if not valid, then
     #flash('Usuário não matriculado na instituição.', 'alert_fail') 
     #and return False
     #else if its valid, then check if its present in local db first:
-    if not db_oper.is_valid_user(db, user, 'user') or \
-       not db_oper.is_valid_user(db, user, 'lock_user'):
+    if not db_oper.is_valid_user(user, 'lock_user'):
         flash('Usuário "'+user+'" inválido.', 'alert_fail')
         return False
-    #TODO else add to local database (and ignore return value)
-    # if user and lock are valid and exists in local database
-    if db_oper.check_permission(room, user):
-        msg = 'Usuário "'+user+'" já possui a permissão para a sala '+room+'.'
+    #TODO else add to local database, because if its arrived here, then its already on LDAP
+    if db_oper.check_permission(db, room, user):
+        msg = 'Usuário "'+user+'" já possui a permissão para a sala "'+room+'".'
         flash(msg, 'alert_warn')
-        return None # case have the permission
-    elif db_oper.set_permission(room, user):
+        return False # case have the permission
+    elif db_oper.set_permission(db, room, user):
         return True
     else:
         flash('Erro ao adicionar usuário.', 'alert_fail') # motivo adverso
         return False
 
-
 ''' Get list of rooms included in LDAP server and exhibit them in a table
-    Can include new rooms in LDAP server
+    Add rooms, only admin username '0' can add rooms
 '''
 @main.route('/rooms', methods=('GET', 'POST'))
 #@login_required
 def rooms():
     if request.method == 'POST':
+        # try if managing rooms
+        room_to_del = None
+        try:
+            room_to_del = request.form['room_to_delete']
+        except:
+            pass
         room = None
         name = None
-        if add_room(room, name):
-            msg = 'Sala número "'+room+'" adicionada ao sistema.'
-            flash(msg, 'alert_ok')
-    
-    rooms = db_oper.get_all_table_users('lock')
-    return render_template('rooms.html', rooms=rooms)
-
-def add_room(room, name):
-    try:
-        room = request.form['room'] # username
-        #password = request.form['password']
-        name = request.form['name']
-        
-        
-    except:
-        if not name or not room:
+        password = None
+        try:
+            room = request.form['room'] # username is the room number
+            #TODO password = request.form['password']
+            # seems not needed a password for add and check rooms
+            password = '123'
+            name = request.form['name']
+        except:
+            pass
+        # try if are managing admistrators
+        username_to_add = None
+        name_to_add = None
+        password_to_add = None
+        try:
+            username_to_add = request.form['username_to_add']
+            name_to_add = request.form['name_to_add']
+            password_to_add = request.form['password_to_add']
+        except:
+            pass
+        sadmin_to_delete = None
+        try:
+            sadmin_to_delete = request.form['sadmin_to_delete']
+        except:
+            pass
+        # do the work depending on was data where submited
+        if room is not None or name is not None:
             if not room:
-                flash('Por favor, forneça um ID de sala válido.', 'alert_fail')
+                flash('Por favor, forneça um Número de sala válido.', 'alert_fail')
             if not name:
                 flash('Por favor, forneça um nome para a sala.', 'alert_fail')
-            return False
-    if db_oper.is_valid_user(db, room, 'lock'):
-        flash('Sala "'+room+'" já existe.', 'alert_warn')
-        return None
-    elif db_oper.insert_user(db, 'lock', atributes={'username': room, 
-                                                    'password': 'password', 
-                                                    'name': name, 
-                                                    'role': 'lock'}):
+            if db_oper.is_valid_user(room, 'lock'):
+                flash('Sala "'+room+'" já existe.', 'alert_warn')
+            if add_room(room, name):
+                msg = 'Sala número "'+room+'" adicionada ao sistema.'
+                flash(msg, 'alert_ok')
+        elif room_to_del is not None:
+            if db_oper.remove_user(db, room_to_del):
+                flash('Sala "'+room_to_del+'" removida com sucesso.', 'alert_ok')
+            else:
+                flash('Erro ao remover: sala não cadastrada.', 'alert_fail')
+        elif username_to_add is not None or \
+                 name_to_add is not None or \
+             password_to_add is not None:
+             if username_to_add is '' or \
+                    name_to_add is '' or \
+                password_to_add is '':
+                flash('Erro ao adicionar sub administradores, por favor preencha Nome de usuário, Nome e Senha.', 'alert_fail')
+             else:
+                userattr={'username': username_to_add, 
+                   'email': username_to_add+'@example.com', 
+                   'name': name_to_add,
+                   'password': password_to_add }
+                added = False
+                try:
+                    added = db_oper.insert_user(db, 'user', userattr)
+                except:
+                    pass
+                if added:
+                    msg = 'Usuário "'+name_to_add+'" adicionado".'
+                    flash(msg, 'alert_ok')
+                    msg = 'Anote esta senha, pois só pode ser visualizada aqui: "'+password_to_add+'".'
+                    flash(msg, 'alert_warn')
+                else:
+                    msg = 'Erro ao adicionar usuário "'+name_to_add+'".'
+                    flash(msg, 'alert_fail')
+        elif sadmin_to_delete is not None:
+            if db_oper.remove_user(db, sadmin_to_delete):
+                msg = 'Usuário cujo identificador é "'+sadmin_to_delete+'" foi removido".'
+                flash(msg, 'alert_ok')
+            else:
+                msg = 'Erro ao remover usuário cujo identificador é "'+sadmin_to_delete+'".'
+                flash(msg, 'alert_fail')
+        else:
+            flash('Requisição incompleta.', 'alert_fail')
+    
+    rooms = db_oper.get_all_table_users('lock')
+    admins = db_oper.get_all_table_users('user')
+    return render_template('rooms.html', rooms=rooms, admins=admins)
+
+def add_room(room, name):
+    if db_oper.insert_user(db, 'lock', atributes={
+                           'username': room, 
+                           'password': '123', 
+                           'name': name, 
+                           'role': 'lock'}):
         return True
     else:
         flash('Erro ao adicionar sala.', 'alert_fail')

@@ -1,4 +1,4 @@
-
+DOCKER_TAG=lcharles060/access-system:0.1
 main: run
 
 run:

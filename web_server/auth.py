@@ -38,11 +38,6 @@ def logout():
     return redirect(url_for('main.index'))
     
 
-
-
-
-
-
 # FIXME there is no signup here, the system will have a admin user and he can add or remove users, this page will be for him , use this to create users
 '''@auth.route('/signup')
 def signup():

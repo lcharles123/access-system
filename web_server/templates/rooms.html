@@ -4,7 +4,7 @@
     <title>Cadastro Salas - Fechadura Eletrônica</title>
 {% endblock %}
 {% block body_content %}
-    <h3>{% block title %} Adicionar Salas {% endblock %}</h3>
+    <h3>{% block title %}Adicionar Salas{% endblock %}</h3>
     <form method="post">
         <label for="room">Número da sala:</label>
         <input type="text" name="room"
@@ -16,21 +16,84 @@
                placeholder="Ex.: WINET"
                value="{{ request.form['name'] }}">
         </input>
-    
+        <!-- TODO include a password input in next versions, but seems not needed -->
         <button type="submit">Cadastrar</button>
     </form>
-    <br>
+    <h3>Remover Sala</h3>
+    <form method="post">
+        <label for="room_to_delete">Sala:</label>
+        <select name="room_to_delete" id="room_to_delete">
+        <option value="none">Selecione</option>
+        {% for r in rooms %}
+            <option value="{{ r.username }}">{{ r.username }} - {{ r.name }}</option>
+        {% endfor %}
+        </select>
+        <button type="submit">Remover</button>
+    </form>
     <h3> Lista de Salas: </h3>
     <table class="post" style="width:100%">
     <tr>
-        <th>Nome</th>
         <th>Número</th>
+        <th>Nome</th>
     </tr>
-    {% for row in rooms %}
+    {% for r in rooms %}
     <tr>
-        <td>{{ row['name'] }}</td>
-        <td>{{ row['username'] }}</td>
+        <td>{{ r['username'] }}</td>
+        <td>{{ r['name'] }}</td>
+    </tr>
+    {% endfor %}
+    </table>
+    <br>
+    <hr>
+    <h3>Adicionar sub administradores</h3>
+    <form method="post">
+        <label for="username_to_add">ID do usuário:</label>
+        <input type="text" name="username_to_add"
+               placeholder="Ex.: 1029934"
+               value="{{ request.form['username_to_add'] }}">
+        </input><br>
+        <label for="name_to_add">Nome do usuário:</label>
+        <input type="text" name="name_to_add"
+               placeholder="Ex.: Ana"
+               value="{{ request.form['name_to_add'] }}">
+        </input><br>
+        <label for="password_to_add">Senha:</label>
+        <input type="text" name="password_to_add"
+               placeholder=""
+               value="{{ request.form['password_to_add'] }}">
+        </input><br>
+        <button type="submit">Cadastrar</button>
+        </form>
+    <h3>Remover sub administradores</h3>
+    <form method="post">
+        <label for="sadmin_to_delete">Nome:</label>
+        <select name="sadmin_to_delete" id="sadmin_to_delete">
+        <option value="none">Selecione</option>
+        {% for a in admins %}
+            <option value="{{ a.username }}">{{ a.username }} - {{ a.name }}</option>
+        {% endfor %}
+        </select>
+        <button type="submit">Remover</button>
+    </form>
+    <h3> Lista de sub administradores: </h3>
+    <table class="post" style="width:100%">
+    <tr>
+        <th>Identificador</th>
+        <th>Nome</th>
+        <th>Papel</th>
+    </tr>
+    <tr> <!-- the row of super admin -->
+        <td>0</td>
+        <td>Admin</td>
+        <td>Super Admin</td>
+    </tr>
+    {% for p in admins %}
+    <tr>
+        <td>{{ p['username'] }}</td>
+        <td>{{ p['name'] }}</td>
+        <td>Admin</td> <!-- All listed here should be regular admin -->
     </tr>
     {% endfor %}
 </table>
+    
 {% endblock %}
