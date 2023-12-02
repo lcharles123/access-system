@@ -57,46 +57,9 @@ def index():
         filtered_entry_table = db_oper.get_entry_table()
     else:
         filtered_entry_table = db_oper.get_entry_table(on='room', element=room)
-    
-    #entry_table = db_oper.get_entry_table(on='room')
-    #FIXME remove after implementing anothers
-    perm = db_oper.get_permission_table()
-    users = db_oper.get_all_table_users('user')
-    admin = db_oper.get_all_table_users('admin')
-    lock_users = db_oper.get_all_table_users('lock_user')
-    locks = db_oper.get_all_table_users('lock')
-    #print(len(entry_table), len(perm), len(users))
-    #print(len(admin), len(lock_users), len(locks))
-    #print(current_user.get_username)
-    #print(entry_table[0].as_row)
-    #for entry in entry_table:
-    #    print(entry['room'])
     return render_template('index.html', current_user=current_user, 
                                         all_entry_table=all_entry_table,
                                         filtered_entry_table=filtered_entry_table) 
-    
-
-'''List all users, given a room number from a specific ldap server
-'''
-#TODO do a anon bind, receive credentials and return if bool if valid user
-def list_users(room_number, url='ldap://serv.hopto.org', admin='cn=admin,dc=ufmg,dc=br', pwd='yweruyoityutrwgfjdytuasdfrtasf'):
-    ldap_srv = ldap.initialize(url)
-    ldap_srv.protocol_version = ldap.VERSION3
-    ldap_srv.set_option(ldap.OPT_REFERRALS, 0)
-    ldap_srv.simple_bind_s(admin, pwd)
-    
-    base = "cn="+str(room_number)+",ou=rooms,dc=ufmg,dc=br"
-    criteria = "(objectClass=posixGroup)" # list all users
-    attributes = ['memberUid']
-    try:
-        users = l.search_s(base, ldap.SCOPE_SUBTREE, criteria, attributes)[0][1]['memberUid']
-    except:
-        users = [b'']
-    if users[0] == b'':
-        return b''   
-    users = [str(i).replace(',', '=').split('=')[1] for i in users]
-    ldap_srv.unbind()
-    return users
 
 ''' A page used to add or delete user permissions
     It can be used a enrollment_id to add user to room_number
@@ -147,10 +110,8 @@ def users():
                 msg = 'Usuário "'+user+'" adicionado à sala '+room+'.'
                 flash(msg, 'alert_ok')
             perm_list = db_oper.get_permission_table() # update permissions after adding
-
     # for add permissions dropdown menu
     rooms = db_oper.get_all_table_users('lock')
-    
     return render_template('users.html', rooms=rooms, permissions=perm_list) 
 
 def try_grant_permission(user, room):
