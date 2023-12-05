@@ -298,7 +298,7 @@ from flask_restful import Resource, Api
 class Lock_Api(Resource):
     def get(self):
         #TODO Parse a documentation here
-        return {'Help on API': 'Write here'}
+        return {'Help on API': 'Go to /help'}
     def post(self):
         # TODO use user accounts for authentication
         # TODO check if data is valid

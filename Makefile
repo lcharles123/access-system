@@ -22,6 +22,19 @@ system_usecases_test.py:
 unit_test.py:
 	python3 -m unittest web_server/test/$@
 
+dedit:
+	nano Dockerfile
+
+dbuild:
+	docker build . --tag $(DOCKER_TAG)
+
+drun:
+	docker run -p 5000:5000 -it $(DOCKER_TAG)
+
+# do docker login on a repository to push
+dpush:
+	docker push $(DOCKER_TAG)
+
 clean:
 	rm -rf __pycache__ /tmp/foo.db database/database.sqlite 
 
