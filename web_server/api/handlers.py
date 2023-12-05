@@ -293,18 +293,27 @@ class DataSuperAdminRequired(Resource):
         return "Test super admin data."
 '''
 
-from flask_restful import Resource, Api  
+from flask_restful import Resource, Api, request
+from web_server.database import db
+from web_server.database.operations import check_permission
 
 class Lock_Api(Resource):
     def get(self):
-        #TODO Parse a documentation here
         return {'Help on API': 'Go to /help'}
     def post(self):
-        # TODO use user accounts for authentication
-        # TODO check if data is valid
-        # consult db of permissions
-        # respond with granted or denied
-        return {'hello': 'post'}
-
-
+        data = request.get_json()
+        room = None
+        user = None
+        try:
+            room = str(data['room'])
+            user = str(data['user'])
+        except:
+            return {'result': '0', 'message': 'error: bad data sent'}, 400
+        else:
+            has_permission = 1 if check_permission(db, room, user) else 0
+            if not has_permission: 
+                # TODO add a message differentiating between user not enrolled and this case below
+                return {'result': '0', 'message': 'error: user does not have permissio to room'}, 200
+            else:
+                return {'result': '1', 'message': 'success'}, 201
 
