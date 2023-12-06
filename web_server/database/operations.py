@@ -48,12 +48,7 @@ def insert_user(db, role, atributes={}):
         raise ValueError("'role' must be one of ['admin', 'user', 'lock', 'lock_user']")
     
     user = User.query.filter_by(username=atributes['username']).first()
-    print(user)
-    #raise Exception()
-    return True
     if user == None:
-        print('entrou')
-        raise Exception()
         email = ''
         try: email = atributes['email']
         except: pass
