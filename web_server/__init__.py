@@ -2,7 +2,7 @@ from flask import Flask
 
 from flask_login import LoginManager
 from password_strength import PasswordPolicy
-import logging
+import logging # TODO log messages along the program
 from os import urandom, path
 from .api.routes import generate_api_routes
 from .database import db, db_init
@@ -14,19 +14,21 @@ from . import app_config
     Need to specify a config class constructor
 '''
 def create_app(development=True):
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
     config_type = None
     if development:
         config_type=app_config.Development
+        logger.info("Development config was set")
     else:
         config_type=app_config.Production
+        logger.info("Production config was set")
     app = Flask(__name__)
     app.config.from_object(config_type())
     generate_api_routes(app) # from api.routes
     db.init_app(app)
     db.app = app
     with app.app_context():
-        # do production thing
-        # atributes for each branch below
         passwd = str(app.config['ADMIN_PASSWD'])
         email = str(app.config['ADMIN_EMAIL'])
         atributes={'username': '0', 
@@ -51,9 +53,9 @@ def create_app(development=True):
             db.create_all()
             result = insert_user(db, 'admin', atributes=atributes)
         if result:
-            print("Admin was set now.")
+            logger.info("Admin was set now")
         else:
-            print("Admin already set, doing nothing.")
+            logger.info("Admin already set, doing nothing")
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
     login_manager.init_app(app)

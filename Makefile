@@ -8,7 +8,7 @@ runprod:
 	python3 run.py
 
 gunicorn:
-	gunicorn -w 4 -b 0.0.0.0:5000 "run:create_app(development=False)"
+	gunicorn -w 2 -b 0.0.0.0:5000 "run:create_app(development=False)"
 
 all_tests: 
 	python3 -m unittest discover -s test
