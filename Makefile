@@ -2,10 +2,13 @@ DOCKER_TAG=lcharles060/access-system:0.1
 main: help
 
 run:
-	python3 run.py
+	python3 run.py 234234
 
 runprod:
-	sh run.sh
+	python3 run.py
+
+gunicorn:
+	gunicorn -w 2 -b 0.0.0.0:5000 "run:create_app(development=False)"
 
 all_tests: 
 	python3 -m unittest discover -s test
