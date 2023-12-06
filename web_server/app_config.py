@@ -40,7 +40,7 @@ class Production(Basic_Config):
     MAX_CONTENT_LENGTH = None #FIXME put a aproximate value here, bytes
     # ensure https
     SESSION_COOKIE_SECURE = True
-    ADMIN_EMAIL = 'admin@example.com' 
+    ADMIN_EMAIL = 'admin@example.com' # add your email and password here
     ADMIN_PASSWD = '123'
 
 
